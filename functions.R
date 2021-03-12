@@ -1715,7 +1715,7 @@ cutoff_prep=function(cutoff, corrdf_r, min_nodes_network){
   
 }
 
-#calculate optimal R² cutoff
+#calculate optimal RÂ² cutoff
 optcut_fun <- function(cutoff_stats){
   
   output <- list()
@@ -1756,7 +1756,7 @@ optcut_fun <- function(cutoff_stats){
     geom_point() +
     geom_smooth(method="lm") +
     theme_bw() + 
-    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; R²: ", round(stats[1],3), "; no. edges: ",
+    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; RÂ²: ", round(stats[1],3), "; no. edges: ",
                    stats[2], "; no. nodes: ", stats[3], "; no. networks: ", stats[4]))
   
   
@@ -1775,7 +1775,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
   
   
   p1 <- plot_ly(cutoff_stats, x = ~corr, y = ~R.squared, type = 'scatter', 
-                mode = 'lines+markers', name = "R²", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
+                mode = 'lines+markers', name = "RÂ²", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
   p2 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_edges, type = 'scatter', 
                 mode = 'lines+markers', name = "no. edges", line = list(color = "orange"), marker = list(color = "orange"))
   p3 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_nodes, type = 'scatter', 
@@ -1791,7 +1791,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
                                                  rep("orange", length(cutoff_stats$corr)),
                                                  rep("lightgreen", length(cutoff_stats$corr)),
                                                  rep("yellow", length(cutoff_stats$corr)))), 
-                 label = paste0(as.character(cutoff_stats$corr[i]), ", R²: ", 
+                 label = paste0(as.character(cutoff_stats$corr[i]), ", RÂ²: ", 
                                 round(cutoff_stats$R.squared[i], 3),
                                 "; no. edges: ", cutoff_stats$no_edges[i], "; no. nodes: ", 
                                 cutoff_stats$no_nodes[i], "; no. networks: ", cutoff_stats$no_of_networks[i]), 
