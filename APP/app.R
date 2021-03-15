@@ -14,7 +14,7 @@ source("WGCNA.R")
 source("CoCena_settings.R")
 source("CoCena_data_processing.R")
 source("CoCena_data_processing2.R")
-source("CoCena_network_generation.R")
+source("Cocena_network_generation.R")
 source("Kegg_module.R")
 source("Biological_Process_module.R")
 source("Hallmark_module.R")
@@ -799,7 +799,7 @@ callModule(powerpoint_module,"module",
            reactive({v$dds$normal()}),reactive({v$dds$dds.fc()[[1]]}),reactive({input$conchoice}),
            reactive({v$raw_pca()}),reactive({v$norm_pca()}),reactive({normal}),reactive(v$data),
            reactive({v$batch$top_batch_pca()}),reactive({v$batch$batch_corrected_data()}),reactive({v$batch$batch_choice()}),
-           reactive({v$de$combination}),reactive({input$ok2}),reactive({input$ok3}),reactive({v$de$ok3()}),reactive({v$de$de_genes()}),reactive({v$TF$de_genes()}),
+           reactive({v$de$combination()}),reactive({input$ok2}),reactive({input$ok3}),reactive({v$de$ok3()}),reactive({v$de$de_genes()}),reactive({v$TF$de_genes()}),
            reactive({v$ma$input_scale()}),reactive({v$ma$p_values()}),
            reactive({v$vol$input_scale_volx()}),reactive({v$vol$input_scale_voly()}),reactive({v$vol$hypothesis_choice()}),
            reactive({v$heat_de$input_Distance()}),reactive({v$heat_de$input_Linkage()}),
@@ -821,56 +821,11 @@ observeEvent(input$ok3,
 
                normal<-list(v$dds$normal(),colData(v$dds$dds.fc()[[1]]),assay(v$dds$dds.fc()[[2]]))
 
-               observeEvent(input$go_wgcna,
-                            {
-                              #Estimate size factors  
-                              dds.norm=estimateSizeFactors(v$dds$dds.fc()[[1]])
-                              if(v$batch$batch_choice()>1)
-                              {
-                                condition<-colData(v$batch$batch_data_for_DESeq()[[1]])[,as.numeric(v$dds$conchoice_app())]
-                                v$wgcna_output<-callModule(WGCNA_module,"module",
-                                                           infile=reactive({v$batch$batch_corrected_data()}),
-                                                           perform_voom=FALSE,condition,
-                                                           reactive({v$dds$dds.fc()[[1]]}),
-                                                           reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                                                           reactive({v$dds$conchoice_app()}),
-                                                           reactive({input_data$organism()}),
-                                                           reactive({v$de$ok3()}),
-                                                           reactive({v$de$combination}),
-                                                           reactive({v$anova$anova_table()}),
-                                                           reactive({v$batch$batch_choice()}),
-                                                           reactive({v$batch$batch_corrected_data()}),
-                                                           reactive({v$dds$normal()})
-                                                           )
-                                
-                              }
-                              else
-                              {
-                                condition<-colData(v$batch$batch_data_for_DESeq()[[1]])[,as.numeric(v$dds$conchoice_app())]
-                                
-                                v$wgcna_output<-callModule(WGCNA_module,"module",
-                                                           infile=reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                                                           perform_voom=TRUE,condition,
-                                                           reactive({v$dds$dds.fc()[[1]]}),
-                                                           reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                                                           reactive({v$dds$conchoice_app()}),
-                                                           reactive({input_data$organism()}),
-                                                           reactive({v$de$ok3()}),
-                                                           reactive({v$de$combination}),
-                                                           reactive({v$anova$anova_table()}),
-                                                           reactive({v$batch$batch_choice()}),
-                                                           NULL,
-                                                           reactive({v$dds$normal()})
-                                                           )
-                                
-                              }
-                              
-                              print("inside app line 484")
-                            })
 
                v$CoCena$settings<-callModule(CoCena_module,"module",
                                     reactive({input_data$pData()}))
                
+               observeEvent(input$CoCenaButton,{
                v$CoCena$data_processing1<-callModule(CoCena_data_processing,"module",
                                                     reactive({v$CoCena$settings$top_var()}),
                                                     reactive({v$CoCena$settings$range_corr()}),
@@ -889,16 +844,17 @@ observeEvent(input$ok3,
                                                      reactive({v$CoCena$settings$voi()}),
                                                      reactive({v$CoCena$settings$range_gfc()})
                                                      )
-               callModule(CoCena_network_generation,"module",
-                          reactive({v$CoCena$data_processing2$filt_cutoff()}),
-                          reactive({v$CoCena$data_processing2$GFC_all_genes()}),
-                          reactive({v$CoCena$settings$min_nodes_cluster()}),
-                          reactive({v$CoCena$settings$voi()})
-                          )
+               v$CoCena$network<-callModule(CoCena_network_generation,"module",
+                                            reactive({v$CoCena$data_processing2$filt_cutoff()}),
+                                            reactive({v$CoCena$data_processing2$GFC_all_genes()}),
+                                            reactive({v$CoCena$settings$min_nodes_cluster()}),
+                                            reactive({v$CoCena$settings$voi()})
+                                            )
+               })
               
                v$de<-callModule(Module_Differential_Expression,"module",input$conchoice,
                                 reactive({v$batch$batch_data_for_DESeq()}),
-                                reactive({v$wgcna_output}),
+                                reactive({v$CoCena$network$cluster_calc}),
                                 reactive({v$dds$normal()}),
                                 reactive({v$batch$batch_choice()}),
                                 reactive({v$batch$batch_corrected_data()}),
@@ -908,10 +864,10 @@ observeEvent(input$ok3,
                                 )
 
                callModule(FC_FC_plot_module,"module",reactive({v$de$de_genes}),
-                          reactive({v$de$combination})
+                          reactive({v$de$combination()})
                           )
 
-               v$ma<-callModule(MA_plot,"module",reactive({v$de$combination}),
+               v$ma<-callModule(MA_plot,"module",reactive({v$de$combination()}),
                           reactive({v$de$de_genes()}),
                           reactive({v$de$p_value()}))
                v$vol<-callModule(Volcano_plot,"module",
@@ -923,13 +879,13 @@ observeEvent(input$ok3,
                           reactive({input_data$dataset()}))
                
                callModule(Venn_diagram_module,"module",reactive({v$de$de_genes}),
-                                     reactive({v$de$combination}),
+                                     reactive({v$de$combination()}),
                                      reactive({v$wgcna_output}))
                
                              v$heat_de<-callModule(heatmap_module,"module","DE",NULL,
                                         reactive({v$batch}),
                                         reactive({v$de$de_genes}),
-                                        reactive({v$de$combination}),
+                                        reactive({v$de$combination()}),
                                         reactive({v$wgcna_output}),
                                         reactive({input_data$organism()})
 
@@ -943,7 +899,7 @@ observeEvent(input$ok3,
                               v$marker<-callModule(Enriched_markers_module,"module1","marker", reactive({TF_list}),
                                                  reactive({input_data$organism()}),
                                                  reactive({v$de$de_genes}),
-                                                 reactive({v$de$combination}),
+                                                 reactive({v$de$combination()}),
                                                  reactive({v$wgcna_output}),
                                                  reactive({v$dds$conchoice_app()}),
                                                  reactive({v$dds$normal()}),
@@ -957,7 +913,7 @@ observeEvent(input$ok3,
                           v$heat_marker<-callModule(heatmap_module,"module2","TF_custom",NULL,
                                          reactive({v$batch}),
                                          reactive({v$marker$de_genes}),
-                                         reactive({v$de$combination}),
+                                         reactive({v$de$combination()}),
                                          reactive({v$wgcna_output}),
                                          reactive({input_data$organism()}) 
                               )
@@ -977,7 +933,7 @@ observeEvent(input$ok3,
                           reactive({TF_list}),
                           reactive({input_data$organism()}),
                           reactive({v$de$de_genes}),
-                          reactive({v$de$combination}),
+                          reactive({v$de$combination()}),
                           reactive({v$wgcna_output}),
                           reactive({v$dds$conchoice_app()}),
                           reactive({v$dds$normal()}),
@@ -991,7 +947,7 @@ observeEvent(input$ok3,
           v$heat_tf<-callModule(heatmap_module,"module1","TF",NULL,
                      reactive({v$batch}),
                      reactive({v$TF$de_genes}),
-                     reactive({v$de$combination}),
+                     reactive({v$de$combination()}),
                      reactive({v$wgcna_output}),
                      reactive({input_data$organism()})
                        
@@ -1001,7 +957,7 @@ observeEvent(input$ok3,
                           reactive({v$batch$batch_choice()}),
                           reactive({v$batch$batch_data_for_DESeq()[[1]]}),
                           reactive({v$batch$batch_data_for_DESeq()[[2]]}),
-                          reactive({v$de$combination}),
+                          reactive({v$de$combination()}),
                           reactive({v$dds$conchoice_app()}),
                           reactive({v$de$de_genes}),
                           reactive({v$dds$normal()}),
@@ -1015,7 +971,7 @@ observeEvent(input$ok3,
                                  reactive({v$anova$dds()}),
                                  reactive({v$batch}),
                                  reactive({v$de$de_genes}),
-                                 reactive({v$de$combination}),
+                                 reactive({v$de$combination()}),
                                  reactive({v$wgcna_output}),
                                  reactive({input_data$organism()})
                                  
@@ -1025,7 +981,7 @@ observeEvent(input$ok3,
                           reactive({v$de$de_genes()}),
                           reactive({v$batch$batch_data_for_DESeq()}),
                           reactive({v$anova$anova_table()}),
-                          reactive({v$de$combination}),
+                          reactive({v$de$combination()}),
                           reactive({v$dds$conchoice_app()}),
                           reactive({v$wgcna_output}),
                           reactive({input_data$organism()}),
@@ -1038,7 +994,7 @@ observeEvent(input$ok3,
                v$kegg<-callModule(Kegg_module,"module",reactive({v$de$de_genes}),
                                                reactive({input_data$organism()}),
                                                reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                                               reactive({v$de$combination}),
+                                               reactive({v$de$combination()}),
                                                reactive({v$wgcna_output}),
                                                reactive({v$anova$anova_table()}),
                                                reactive({input_data$orgDB()})
@@ -1047,14 +1003,14 @@ observeEvent(input$ok3,
                v$bp<-callModule(Biological_process_module,"module",reactive({v$de$de_genes}),
                           reactive({input_data$organism()}),
                           reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                          reactive({v$de$combination}),
+                          reactive({v$de$combination()}),
                           reactive({v$wgcna_output}),
                           reactive({input_data$orgDB()}))
                
                v$hallmark<-callModule(Hallmark_module,"module",reactive({v$de$de_genes}),
                           reactive({input_data$organism()}),
                           reactive({v$batch$batch_data_for_DESeq()[[1]]}),
-                          reactive({v$de$combination}),
+                          reactive({v$de$combination()}),
                           reactive({v$wgcna_output}),
                           reactive({input_data$orgDB()}))
                

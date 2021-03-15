@@ -16,7 +16,7 @@ heatmap_module_UI<-function(id)
                     )),
     uiOutput(ns("heat_comb")),
     downloadButton(ns('download_heatmap'), 'Download Plot'),
-    fluidRow(column(8,plotOutput(ns("heatmap"))
+    fluidRow(column(8,imageOutput(ns("heatmap"))
                     )
              )
   )
@@ -31,7 +31,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
     {
       result<-de_genes()
       combo<-combination()
-      if(length(combo())>0)
+      if(length(combo)>0)
       {
         # Create a Progress object
         progress <- shiny::Progress$new()
@@ -43,9 +43,9 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         # Number of times we'll go through the loop
         n <- 2
         
-        rows<-length(combo())
+        rows<-length(combo)
         modules<-NULL
-        res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
+        res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
         
         # Increment the progress bar, and update the detail text.
         progress$inc(1/n, detail = paste("Doing part", 1,"/",n))
@@ -59,7 +59,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
           {
             modules<-as.data.frame(table(wgcna_output()$modules()))
             colnames(modules)<-c("Var1","number")
-            entry<-c(combo(), levels(modules$Var1))
+            entry<-c(combo, levels(modules$Var1))
             checklist<-list()
             for (i in seq_along(entry)) {
               checklist[[entry[[i]]]] = i
@@ -78,8 +78,8 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         }
         else{
           
-          comb<-lapply(1:length(combo()), function(i) {
-            combo()[[i]]
+          comb<-lapply(1:length(combo), function(i) {
+            combo[[i]]
             
           })
           checklist<-list()
@@ -104,7 +104,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         closeAlert(session,"Organism1")
       result<-de_genes()
       combo<-combination()
-      if(length(combo())>0)
+      if(length(combo)>0)
       {
         # Create a Progress object
         progress <- shiny::Progress$new()
@@ -116,9 +116,9 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         # Number of times we'll go through the loop
         n <- 2
         
-        rows<-length(combo())
+        rows<-length(combo)
         modules<-NULL
-        res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
+        res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
         
         # Increment the progress bar, and update the detail text.
         progress$inc(1/n, detail = paste("Doing part", 1,"/",n))
@@ -132,7 +132,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
           {
             modules<-as.data.frame(table(wgcna_output()$modules()))
             colnames(modules)<-c("Var1","number")
-            entry<-c(combo(), levels(modules$Var1))
+            entry<-c(combo, levels(modules$Var1))
             checklist<-list()
             for (i in seq_along(entry)) {
               checklist[[entry[[i]]]] = i
@@ -151,8 +151,8 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         }
         else{
           
-          comb<-lapply(1:length(combo()), function(i) {
-            combo()[[i]]
+          comb<-lapply(1:length(combo), function(i) {
+            combo[[i]]
             
           })
           checklist<-list()
@@ -193,7 +193,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
           if(heatmap_call=="ANOVA")
           {
             combo<-combination()
-            num<-length(combo())
+            num<-length(combo)
             heatmap_name<-"Heatmap of top 1000 most variable genes"
             heatmap_genes(heatmap_call,dds(),dds.fc,rld,NULL,
                           result,NULL,NULL,
@@ -204,7 +204,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
           {
             result<-de_genes()
             combo<-combination()
-            num<-length(combo())
+            num<-length(combo)
             
             heatmap_name<-" "
             if(!is.null(wgcna_output()))
@@ -214,7 +214,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
                 mod<-wgcna_output()$modules()
                 modules<-as.data.frame(table(mod))
                 colnames(modules)<-c("Var1","numbers")
-                entry<-c(as.vector(combo()), as.vector(modules$Var1))
+                entry<-c(as.vector(combo), as.vector(modules$Var1))
                 
                 heatmap_name<-paste("Heatmap of ",heatmap_call,entry[as.numeric(input$heat_choice)])
                 h<-heatmap_genes(heatmap_call,NULL,dds.fc,rld,input$heat_choice,
@@ -229,7 +229,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             }
             else
             {
-              heatmap_name<-paste("Heatmap of ",combo()[[as.numeric(input$heat_choice)]])
+              heatmap_name<-paste0("Heatmap of ",combo[[as.numeric(input$heat_choice)]])
               
               h<-heatmap_genes(heatmap_call,NULL,dds.fc,rld,input$heat_choice,
                             result,NULL,NULL,
@@ -266,14 +266,12 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             
             # Pause for 0.1 seconds to simulate a long computation.
             Sys.sleep(0.1)
-            png(outfile, width=980, height=680)
-            heatmap()
-            dev.off()
             # Increment the progress bar, and update the detail text.
             progress$inc(1/n, detail = paste("Doing part", 2,"/",n))
             
-            # Pause for 0.1 seconds to simulate a long computation.
-            Sys.sleep(0.1)
+            png(outfile, width=980, height=680)
+            heatmap()
+            dev.off()
           }
           else if(heatmap_call=='ANOVA')
           {
@@ -286,11 +284,10 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             png(outfile, width=980, height=680)
             dev.off()
           }
-          # Return a list
           list(src = outfile,
                alt = "This is alternate text")
-          
-        }, deleteFile = TRUE)
+
+        },deleteFile=TRUE)
         
         
         #download heatmap
@@ -302,7 +299,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             heatmap_names<-""
             
             if(heatmap_call=="ANOVA")  heatmap_name<-"Heatmap of top 1000 most variable genes"
-            else heatmap_name<-paste("Heatmap of ",heatmap_call,combo()[[choice]])
+            else heatmap_name<-paste("Heatmap of ",heatmap_call,combo[[choice]])
             paste(heatmap_name,'.pdf')
             
           },

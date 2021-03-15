@@ -117,7 +117,7 @@ ANOVA_module<-function(input,output,session,
       colnames(anova)[1]<-"Overall mean"
       result<-DE_genes()
       combo<-combination()
-      num <-length(combo())
+      num <-length(combo)
       l<-list()
       l[[1]]<-anova[,-3]
       for(i in 1:num)
@@ -132,7 +132,7 @@ ANOVA_module<-function(input,output,session,
         colnames(res)[5]<-"Overall mean"
         for (j in 1:length(colnames(res)))
         {
-          colnames(res)[j]<-paste0(combo()[[i]],' ',colnames(res)[j])
+          colnames(res)[j]<-paste0(combo[[i]],' ',colnames(res)[j])
         }
         
         l[[length(l)+1]]<-res

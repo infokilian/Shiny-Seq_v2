@@ -95,7 +95,7 @@ Module_Differential_Expression_UI<-function(id)
   )
 }
 Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
-                                         wgcna_output, normal,batch_choice,batch_corrected,anova_table,conchoice_module1,filechoice)
+                                         CoCena, normal,batch_choice,batch_corrected,anova_table,conchoice_module1,filechoice)
 
 {
 
@@ -285,15 +285,15 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
     num <- length(input$combination)
     n<-num+2
 
-    if(!is.null(wgcna_output()))
-    {
-      if(length(wgcna_output()$modules())>0)
-      {
-        mod<-wgcna_output()$modules()
-        modules<-as.data.frame(table(mod))
-        n<-n+nrow(modules)
-      }
-    }
+    #if(!is.null(wgcna_output()))
+    #{
+    #  if(length(wgcna_output()$modules())>0)
+    #  {
+    #    mod<-wgcna_output()$modules()
+    #    modules<-as.data.frame(table(mod))
+    #    n<-n+nrow(modules)
+    #  }
+    #}
 
     library('fdrtool')
     #Get the deseq2 dataset
@@ -669,26 +669,32 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
       Sys.sleep(0.1)
     }
 
-    #if(!is.null(CoCena()))
-    #{
+    if(!is.null(CoCena()))
+    {
     #  if(length(wgcna_output()$modules())>0)
     #  {
-    #  cluster_info<-CoCena()[,CoCena()$cluster_included=="yes",]
+      cluster_info<-CoCena()[,CoCena()$cluster_included=="yes",]
         # filter anova table from module genes
-
-    #      for(i in 1:nrow(cluster_info))
-    #   {
+      result_update <- list()
+      for(m in 1:length(input$combination)){
+          for(i in 1:nrow(cluster_info))
+            {
+            gene_cluster<-unlist(strsplit(cluster_info[i,"gene_n"],sep=","))
+            up_cluster<-base::intersect(gene_cluster,result[[m]][1])
+            down_cluster<-base::intersect(gene_cluster,result[[m]][2])
+            both_cluster<-base::union(up_cluster,down_cluster)
     #      result[[length(result)+1]]<-list(0,0,modules$Freq[i],0,0)
           # Increment the progress bar, and update the detail text.
     #      progress$inc(1/n, detail = paste("Doing part", num+2+i,"/",n))
           # Pause for 0.1 seconds to simulate a long computation.
     #      Sys.sleep(0.1)
 
-    #   }
-
+          }
+        result_update<-
+      }
 
     #  }
-    #}
+    }
 
     result
   })
@@ -710,24 +716,16 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
       rows<-num
       res<-data.frame(matrix(NA, nrow = num, ncol = 3))
 
-      if(!is.null(wgcna_output()))
+      if(!is.null(CoCena()))
       {
-        mod<-wgcna_output()$modules()
-        print("line 755 module diff exp")
-        print(mod)
+        cluster_info<-CoCena()[,CoCena()$cluster_included=="yes",]
+        num<-nrow(cluster_info)
+        res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
         
-        modules<-as.data.frame(table(mod))
-        colnames(modules)<-c("Var1","number")
-        print(modules)
-        validate(
-          need(length(DE_genes())==(nrow(modules)+num), "Please click start button")
-        )
-        # print(modules)
-        # WGCNA_matrix<-wgcna()[[2]]
-        entry<-c(input$combination, levels(modules$Var1))
-        # print(modules$Var1)
-        print(entry)
-        rows<-length(entry)
+          
+        
+          entry<-c(input$combination, levels(modules$Var1))
+          rows<-length(entry)
           res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
           colnames(res)<-c('Up regulated','Down regulated','Both')
 
@@ -1222,7 +1220,7 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
 
 ########################
 
-return(list(combination=reactive({input$combination}),
+return(list(combination=reactive({lapply( 1:length(input$combination), function(i) input$combination[i])}),
             de_genes=reactive({DE_genes()}),
             p_values=reactive({lapply( 1:length(input$combination), function(i) input[[paste0("p-value",i)]] )
             }),

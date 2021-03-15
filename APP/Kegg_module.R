@@ -47,8 +47,8 @@ Kegg_module<-function(input,output,session,DE_genes,
 {
 
   combo<-combination()
-  print(combo())
-  num<-length(combo())
+  print(combo)
+  num<-length(combo)
   #Compute the KEGG pathway based on a list for a list of DE genes(Uses function enrichKEGG from clusterprofiler)
   #Construct  a matrix where row->comparison A vs B, C vs D .etc
   # columns (up regulated pathways, down regulated pathways)
@@ -60,7 +60,7 @@ Kegg_module<-function(input,output,session,DE_genes,
     if (organism() != "Others"){
       
     closeAlert(session,"Others2")
-    num<-length(combo())
+    num<-length(combo)
     if(!is.null(wgcna_output()))
     {
       if((length(wgcna_output()$modules())>0))
@@ -72,7 +72,7 @@ Kegg_module<-function(input,output,session,DE_genes,
     else
     {
       combo<-combination()
-      num<-length(combo())
+      num<-length(combo)
       enrichment_main("kegg",result_de(),organism(),dds.fc(),
                       num,NULL,NULL,NULL,orgDB())
     }
@@ -98,7 +98,7 @@ Kegg_module<-function(input,output,session,DE_genes,
           mod<-wgcna_output()$modules()
           modules<-as.data.frame(table(mod))
           colnames(modules)<-c("Var1","numbers")
-          entry<-c(as.vector(combo()), as.vector(modules$Var1))
+          entry<-c(as.vector(combo), as.vector(modules$Var1))
           rows<-length(entry)
           
           res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
@@ -107,14 +107,14 @@ Kegg_module<-function(input,output,session,DE_genes,
             entry[[i]]
             
           })
-          for(i in 1:length(combo()))
+          for(i in 1:length(combo))
           {
             res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
             res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
             res[i,3]<-0
           }
           
-          for(i in 1+length(combo()):nrow(modules))
+          for(i in 1+length(combo):nrow(modules))
           {
             res[i,1:2]<-0
             res[i,3]<-nrow(as.data.frame(result[[i]][3]))
@@ -123,14 +123,14 @@ Kegg_module<-function(input,output,session,DE_genes,
         }
       }
       else{
-        res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 2))
-        rownames(res)<-lapply(1:length(combo()), function(i) {
-          combo()[[i]]
+        res<-data.frame(matrix(NA, nrow = length(combo), ncol = 2))
+        rownames(res)<-lapply(1:length(combo), function(i) {
+          combo[[i]]
 
         })
         colnames(res)<-c('Enriched Kegg pathways for Up-reg genes','Enriched Kegg pathways for Down-reg genes')
 
-        for(i in 1:length(combo()))
+        for(i in 1:length(combo))
         {
           print(nrow(as.data.frame(result[[i]][[1]])))
           res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
@@ -182,15 +182,15 @@ observeEvent(input$Enriched_kegg_cell_clicked,{
       })
     output$op_an<-renderUI({
       combo<-combination()
-      num<-length(combo())
+      num<-length(combo)
         if(row>num)
         {
           
-          if(!is.null(combo()))
+          if(!is.null(combo))
           {
 
             comb<-lapply(1:num, function(i) {
-              combo()[[i]]
+              combo[[i]]
 
             })
             
@@ -294,13 +294,13 @@ output$download_Enriched_Kegg_Table <- downloadHandler(
         filename = function() 
         {
           if(as.numeric(input$datachoice9==1)){
-          condition <-combo()[[row]]
+          condition <-combo[[row]]
           if(col==1) paste('Up regulated Kegg for ',condition,'.xlsx')
           else if(col==2) paste('Down regulated Kegg for ',condition,'.xlsx')
           else if(col==3) paste('regulated Kegg for ',condition,'.xlsx')
           }
           else {
-            condition <-combo()[[row]]
+            condition <-combo[[row]]
             if(col==1) paste('Up regulated Kegg for ',condition,'.csv')
             else if(col==2) paste('Down regulated Kegg for ',condition,'.csv')
             else if(col==3) paste('regulated Kegg for ',condition,'.csv')
@@ -313,7 +313,7 @@ output$download_Enriched_Kegg_Table <- downloadHandler(
           df<-as.data.frame(result[[row]][[col]])
           
           nam<-"Sheet 1"
-          condition <-combo()[[row]]
+          condition <-combo[[row]]
           condition<-str_replace_all(condition,"[^[:alnum:]]",".")
           if(col==1) nam<-paste('Up regulated Kegg for ',condition)
           else if(col==2) nam<-paste('Down regulated Kegg for ',condition)
@@ -364,7 +364,7 @@ output$kegg<- renderPlot({
 output$download_kegg_plot <- downloadHandler(
   filename = function()
   {
-    condition <-combo()[[row]]
+    condition <-combo[[row]]
     if(col==1) paste(input$plot_k,' of Up regulated kegg for ',condition,'.svg')
     else if(col==2) paste(input$plot_k,' of Down regulated kegg for ',condition,'.svg')
     else if(col==3) paste(input$plot_k,' of regulated kegg for ',condition,'.svg')

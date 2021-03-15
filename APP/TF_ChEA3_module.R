@@ -73,17 +73,18 @@ output$predicted_TF <- DT::renderDataTable({
 
     combo<-combination()
 
-    rows<-length(combo())
+    rows<-length(combo)
+
     modules<-NULL
     WGCNA_matrix<-NULL
-    res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
+    res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
     if(!is.null(wgcna_output()))
     {
       if((length(wgcna_output()$modules())>0))
       {
         combo<-combination()
         modules<-as.data.frame(table(wgcna_output()$modules()))
-        entry<-c(as.vector(combo()), as.vector(modules$Var1))
+        entry<-c(as.vector(combo), as.vector(modules$Var1))
 
         rows<-length(entry)
         
@@ -94,7 +95,7 @@ output$predicted_TF <- DT::renderDataTable({
           unlist(entry[i])
           
         })
-        for(i in 1:length(combo()))
+        for(i in 1:length(combo))
         {
 
           res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
@@ -105,22 +106,22 @@ output$predicted_TF <- DT::renderDataTable({
         for(i in 1:nrow(modules))
         {
 
-          res[length(combo())+i,1:2]<-0
-          res[length(combo())+i,3]<-nrow(as.data.frame(result[[length(combo())+i]][3]))
+          res[length(combo)+i,1:2]<-0
+          res[length(combo)+i,3]<-nrow(as.data.frame(result[[length(combo)+i]][3]))
           
         }
       }
     }
     else{
       combo<-combination()
-      rownames(res)<-lapply(1:length(combo()), function(i) {
+      rownames(res)<-lapply(1:length(combo), function(i) {
 
-        combo()[[i]]
+        combo[[i]]
         
       })
       colnames(res)<-c('Predicted TF for Up-reg genes','Predicted TF for Down-reg genes','Predicted TF for All genes')
 
-      for(i in 1:length(combo()))
+      for(i in 1:length(combo))
       {
         print(nrow(as.data.frame(result[[i]][[1]])))
         res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
@@ -239,14 +240,14 @@ observeEvent(input$predicted_TF_cell_clicked,{
       {
         if (as.numeric(input$datachoice7==1)){
         combo<-combination()
-        condition<-combo()[[row]]
+        condition<-combo[[row]]
         if(col==1) paste('Up regulated predicted TF for ',condition,'.xlsx')
         else if(col==2) paste('Down regulated predicted TF for ',condition,'.xlsx')
         else paste('All DE predicted TF for ',condition,'.xlsx')
         }
         else {
           combo<-combination()
-          condition<-combo()[[row]]
+          condition<-combo[[row]]
           if(col==1) paste('Up regulated predicted TF for ',condition,'.csv')
           else if(col==2) paste('Down regulated predicted TF for ',condition,'.csv')
           else paste('All DE predicted TF for ',condition,'.csv')
@@ -267,7 +268,7 @@ observeEvent(input$predicted_TF_cell_clicked,{
         }
         nam<-"Sheet 1"
         combo<-combination()
-        condition<-combo()[[row]]
+        condition<-combo[[row]]
         condition<-str_replace_all(condition,"[^[:alnum:]]",".")
         if(col==1) nam<-paste('Up regulated Kegg for ',condition)
         else if(col==2) nam<-paste('Down regulated Kegg for ',condition)
@@ -293,7 +294,7 @@ observeEvent(input$predicted_TF_cell_clicked,{
 
           nam<-"Sheet 1"
           combo<-combination()
-          condition<-combo()[[row]]
+          condition<-combo[[row]]
           condition<-str_replace_all(condition,"[^[:alnum:]]",".")
           if(col==1) nam<-paste('Up regulated Kegg for ',condition)
           else if(col==2) nam<-paste('Down regulated Kegg for ',condition)

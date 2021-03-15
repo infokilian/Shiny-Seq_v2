@@ -25,19 +25,19 @@ FC_FC_plot_module<-function(input,output,session,DE_genes,
 {
   result<-DE_genes()
   combo<-combination()
-  num <- length(combo())
+  num <- length(combo)
   ########fc fc plot#########
   #display an interactve table that summarizes the DE genes identified for each comparisons
   output$de_fc <- DT::renderDataTable({
     
-    res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
-    rownames(res)<-lapply(1:length(combo()), function(i) {
-      combo()[[i]]
+    res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
+    rownames(res)<-lapply(1:length(combo), function(i) {
+      combo[[i]]
       
     })
     colnames(res)<-c('up-regulated_genes','down-regulated_genes','All-DE')
 
-    for(i in 1:length(combo()))
+    for(i in 1:length(combo))
     {
       res[i,1]<-nrow(as.data.frame(result()[[i]][1]))
       res[i,2]<-nrow(as.data.frame(result()[[i]][2]))
@@ -70,8 +70,8 @@ FC_FC_plot_module<-function(input,output,session,DE_genes,
     
     progress$set(message = "Processing Data", value = 0)
     
-    comp<-lapply(1:length(combo()), function(i) {
-      combo()[[i]]
+    comp<-lapply(1:length(combo), function(i) {
+      combo[[i]]
       
     })
     if(nrow(selected) == 2)

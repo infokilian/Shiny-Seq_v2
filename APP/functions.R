@@ -244,7 +244,7 @@ heatmap_sample<-function(sampleDists,vsd)
   
   # Pause for 0.1 seconds to simulate a long computation.
   Sys.sleep(0.1)
- p<-pheatmap(sampleDistMatrix,
+ p<-pheatmap::pheatmap(sampleDistMatrix,
            clustering_distance_rows=sampleDists,
            clustering_distance_cols=sampleDists,
            col=colors)
@@ -1020,18 +1020,17 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
       result<-DE_genes()
       DEG<-NULL
       
-      if(as.numeric(heat_choice)>num)
-      {
-        modules<-as.data.frame(table(mod))
-        colnames(modules)<-c("Var1","numbers")
-        idx_w<-which(mod==modules$Var1[as.numeric(heat_choice)-num])
-        print("inside function line 1161")
-        DEG<-colnames(WGCNA_matrix)[idx_w]#all module genes
-      }
-      else
-      {
+     # if(as.numeric(heat_choice)>num)
+      #{
+      #  modules<-as.data.frame(table(mod))
+      #  colnames(modules)<-c("Var1","numbers")
+      #  idx_w<-which(mod==modules$Var1[as.numeric(heat_choice)-num])
+      #  print("inside function line 1161")
+      #  DEG<-colnames(WGCNA_matrix)[idx_w]#all module genes
+    #  }
+
         DEG<-as.data.frame(result[[as.numeric(heat_choice)]][[3]])[,1]
-        }
+        
       topVarGenes<-which(rownames(rld) %in% DEG)
 
     }
@@ -1092,8 +1091,9 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   colors <-brewer.pal(8, "Dark2")
   n <- 30
   qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+
   colors = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-  
+
   mat<-rld[topVarGenes,]
   p<-NULL
   if(nrow(mat)>1 && !is.null(nrow(mat)))
@@ -1110,17 +1110,15 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
 
   names<-FALSE
   if(nrow(mat)<20) names<-TRUE
-  
-  library(pheatmap)
-  
+
   annotation <- data.frame(condition = colData(dds.fc)[,"condition"])
   rownames(annotation) <-  colnames(mat)# check out the row names of annotation
   
   Var1        <- unique(colors[colData(dds.fc)[,"condition"]])
   names(Var1) <- levels(colData(dds.fc)[,"condition"])
   anno_colors <- list(condition = Var1)
-  
-  p<-pheatmap(mat, annotation = annotation,color = my_palette,
+
+  p<-pheatmap::pheatmap(mat, annotation = annotation,color = my_palette,
               main = heatmap_name,
               clustering_distance_rows = dist_method[as.numeric(Distance)],
               clustering_method = link_method[as.numeric(Linkage)],
@@ -1342,6 +1340,7 @@ on.exit(progress$close())
 #get all de genes
 result<-DE_genes
 combo<-combination
+
 progress$set(message = "Processing Data", value = 0)
 
 Enriched_dt<-list()
@@ -1715,7 +1714,7 @@ cutoff_prep=function(cutoff, corrdf_r, min_nodes_network){
   
 }
 
-#calculate optimal RÂ² cutoff
+#calculate optimal R² cutoff
 optcut_fun <- function(cutoff_stats){
   
   output <- list()
@@ -1756,7 +1755,7 @@ optcut_fun <- function(cutoff_stats){
     geom_point() +
     geom_smooth(method="lm") +
     theme_bw() + 
-    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; RÂ²: ", round(stats[1],3), "; no. edges: ",
+    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; R²: ", round(stats[1],3), "; no. edges: ",
                    stats[2], "; no. nodes: ", stats[3], "; no. networks: ", stats[4]))
   
   
@@ -1775,7 +1774,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
   
   
   p1 <- plot_ly(cutoff_stats, x = ~corr, y = ~R.squared, type = 'scatter', 
-                mode = 'lines+markers', name = "RÂ²", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
+                mode = 'lines+markers', name = "R²", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
   p2 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_edges, type = 'scatter', 
                 mode = 'lines+markers', name = "no. edges", line = list(color = "orange"), marker = list(color = "orange"))
   p3 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_nodes, type = 'scatter', 
@@ -1791,7 +1790,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
                                                  rep("orange", length(cutoff_stats$corr)),
                                                  rep("lightgreen", length(cutoff_stats$corr)),
                                                  rep("yellow", length(cutoff_stats$corr)))), 
-                 label = paste0(as.character(cutoff_stats$corr[i]), ", RÂ²: ", 
+                 label = paste0(as.character(cutoff_stats$corr[i]), ", R²: ", 
                                 round(cutoff_stats$R.squared[i], 3),
                                 "; no. edges: ", cutoff_stats$no_edges[i], "; no. nodes: ", 
                                 cutoff_stats$no_nodes[i], "; no. networks: ", cutoff_stats$no_of_networks[i]), 

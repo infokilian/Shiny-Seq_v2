@@ -57,7 +57,7 @@ powerpoint_module<-function(input,output,session,
                    on.exit(progress$close())
                    progress$set(message = "Processing Data", value = 0)
                    combo<-combination()
-                   n<-7+length(combo())
+                   n<-7+length(combo)
 
                    # Increment the progress bar, and update the detail text.
                    progress$inc(1/(n), detail = paste("Doing part", 1,"/",(n)))
@@ -169,7 +169,8 @@ powerpoint_module<-function(input,output,session,
                      # Slide 9: comparison
                      #+++++++++++++++++++++++
                      combo<-combination()
-                     num<- length(combo())
+                     num<- length(as.numeric(combo))
+                  
                      res<-Enriched_Kegg_obj()
                      result<-Enriched_Kegg_table()
                      res_bp<-Enriched_BP_obj()
@@ -181,7 +182,7 @@ powerpoint_module<-function(input,output,session,
                      if(as.numeric(filechoice())!=3) result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), 10)
                      else result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice_module1(), NULL, organism(), dataset(), 10)
 
-                     q$dat<-summary_analysis(result_de,result_tf,result,result_bp,result_hall,combo())
+                     q$dat<-summary_analysis(result_de,result_tf,result,result_bp,result_hall,combo)
 
                      #TF
 
@@ -205,17 +206,17 @@ powerpoint_module<-function(input,output,session,
                      # Pause for 0.1 seconds to simulate a long computation.
                      Sys.sleep(0.1)
 
-                     for (i in 1:num)
+                     for (i in 1:length(combo))
                      {
-                       name<-str_replace_all(combo()[[i]],"[^[:alnum:]]"," ")
+                       name<-str_replace_all(combo[[i]],"[^[:alnum:]]"," ")
                        #p-value plot
                        png(filename = str_replace_all(paste("./plots/p value plot ",name,".png",sep = "")," ","_"), height = 10, width = 20, units = "cm", res = 600)
-                       p_value_all(result_de,i,combo())
+                       p_value_all(result_de,i,combo)
                        dev.off()
                        q$plot_names=c(q$plot_names,str_replace_all(paste("./plots/p value plot ",name,".png",sep = "")," ","_"))
                        #ma plot
                        png(filename=str_replace_all(paste("./plots/MA plot ",name,".png",sep = "")," ","_"), height = 10, width = 20, units = "cm", res = 600)
-                       ma_plot(i,combo(),result_de,input_scale(),p_values())
+                       ma_plot(i,combo,result_de,input_scale(),p_values())
                        dev.off()
 
                        q$plot_names=c(q$plot_names,str_replace_all(paste("./plots/MA plot ",name,".png",sep = "")," ","_"))
@@ -236,7 +237,7 @@ powerpoint_module<-function(input,output,session,
                          lim_x<-1
                        }
 
-                       p<-volcano_plot(i,combo(),result_de,
+                       p<-volcano_plot(i,combo,result_de,
                                        lim_x,lim_y,"Default","",organism(),dataset(),"",NULL,10)
                        ggsave(filename=nam, plot=p,
                               device="png", height = 10, width = 20, units = "cm"
@@ -260,11 +261,12 @@ powerpoint_module<-function(input,output,session,
                                         input_Distance_de(),input_Linkage_de())
 
                          png(nam1,width = 12, height = 12, units = "cm", res = 600)
+                         print(h_de_genes)#essential for creating the heatmap in the powperpoint
                          dev.off()
                          q$plot_names=c(q$plot_names,nam1)
 
                        # tf heatmap
-
+                      if(organism()%in% c("Homo sapiens", "Mus musculus")){
                        if(!is.null(result_tf))
                        {
                          h_de_tf<-heatmap_genes("TF",NULL,dds.fc(),rld,i,
@@ -273,10 +275,12 @@ powerpoint_module<-function(input,output,session,
                                           input_Distance_tf(),input_Linkage_tf())
 
                            png(nam,width = 12, height = 12, units = "cm", res = 600)
+                           print(h_de_tf)#essential for creating the heatmap in the powperpoint
                            dev.off()
                            q$plot_names=c(q$plot_names,nam)
 
                        }
+                      }
 
                        #up regulated genes
 
@@ -658,7 +662,7 @@ powerpoint_module<-function(input,output,session,
       on.exit(progress$close())
       progress$set(message = "Processing Data", value = 0)
       combo<-combination()
-      n<-7+length(combo())
+      n<-7+length(combo)
 
       my_pres <- my_pres %>%
         add_slide(layout = "Title Slide", master = "Office Theme") %>%
@@ -792,7 +796,7 @@ powerpoint_module<-function(input,output,session,
       progress$inc(1/(n), detail = paste("Doing part", 4,"/",(n)))
       # Pause for 0.1 seconds to simulate a long computation.
       Sys.sleep(0.1)
-      name<-unlist(lapply(combo(),function(x) str_replace_all(x,"[^[:alnum:]]","")))
+      name<-unlist(lapply(combo,function(x) str_replace_all(x,"[^[:alnum:]]","")))
       #DE genes
       dat<-q$dat[[1]]
       dat<-cbind.data.frame(Comparison=name,dat)
@@ -884,9 +888,9 @@ powerpoint_module<-function(input,output,session,
       Sys.sleep(0.1)
       head_idx<-0
       
-      for (i in 1:length(combo()))
+      for (i in 1:length(combo))
       {
-        name<-str_replace_all(combo()[[i]],"[^[:alnum:]]"," ")
+        name<-str_replace_all(combo[[i]],"[^[:alnum:]]"," ")
 
         print(name)
         #slide with comparison
@@ -1011,13 +1015,13 @@ powerpoint_module<-function(input,output,session,
         if(temp=="All") str_name<-"All"
         if(temp=="No_") str_name <- "No"
 
-        ft <- flextable(dat)
-        ft <- autofit(ft)
+        #ft <- flextable(dat)
+        #ft <- autofit(ft)
 
-        my_pres <- my_pres %>%
-          add_slide(layout = "Title and Content", master = "Office Theme") %>%
-          ph_with(value = paste(str_name,"up regulated kegg pathways for",name,sep=" "), location = ph_location_type(type = "title")) %>%
-          ph_with(ft,location = ph_location_type(type = "body") )
+        #my_pres <- my_pres %>%
+        #  add_slide(layout = "Title and Content", master = "Office Theme") %>%
+        #  ph_with(value = paste(str_name,"up regulated kegg pathways for",name,sep=" "), location = ph_location_type(type = "title")) %>%
+        #  ph_with(ft,location = ph_location_type(type = "body") )
 
         my_pres <- my_pres %>%
           add_slide(layout = "Title and Content", master = "Office Theme") %>%
@@ -1174,6 +1178,9 @@ powerpoint_module<-function(input,output,session,
           add_slide(layout = "Title and Content", master = "Office Theme") %>%
           ph_with(value = paste(str_name,"down regulated molecular signatures for",name,sep=" "), location = ph_location_type(type = "title")) %>%
           ph_with(external_img(q$plot_names[src+3]),ph_location_type(type = "body"))
+        src=src+3
+        }else{
+          src=src+2
         }
         }
       }
@@ -1237,7 +1244,7 @@ powerpoint_module<-function(input,output,session,
                      closeAlert(session, "DE_missing")
                    #total number of comparisons
                    combo<-combination()
-                   num<- length(combo())
+                   num<- length(combo)
                    #de genes table
                    result_de<-DE_genes()
                    #tf table
@@ -1284,7 +1291,7 @@ powerpoint_module<-function(input,output,session,
                      {
 
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
                          sheet_name<-paste('Up regulated DE Genes')
                          sheet_numb <- sheet_numb +1
@@ -1295,7 +1302,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Up regulated DE Genes for', condition, '.csv',sep=""))
                        }
                      }
@@ -1314,7 +1321,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Up regulated TFs')
                          #write.csv(data, file)
                          sheet_numb <- sheet_numb + 1
@@ -1325,7 +1332,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Up regulated TF for', condition, '.csv',sep=""))
                        }
                      }
@@ -1346,7 +1353,7 @@ powerpoint_module<-function(input,output,session,
                        if(nrow(data)>0)
                        {
                          if (as.numeric(input$datachoiceX==1)){
-                           condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                           condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                            sheet_name<-paste('Up reg., overrepresented TFs')
                            #write.csv(data, file)
                            sheet_numb <- sheet_numb + 1
@@ -1357,7 +1364,7 @@ powerpoint_module<-function(input,output,session,
                            writeData(wb = wb1, sheet = sheet_numb, x = M)
                          }
                          else{
-                           condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                           condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                            write.csv(data, file=paste(input$download_all_tables_path,'/Up reg., overrepresented TF for', condition, '.csv',sep=""))
                          }
                        }
@@ -1369,7 +1376,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Up regulated kegg pathways')
                          #write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1380,7 +1387,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Up regulated kegg pathways for', condition, '.csv',sep=""))
                        }
 
@@ -1392,7 +1399,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Up regulated BPs')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1403,7 +1410,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Up regulated BP for', condition, '.csv',sep=""))
                        }
 
@@ -1424,7 +1431,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Up regulated Hallmarks')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1435,7 +1442,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Up regulated Hallmark gene sets for', condition, '.csv',sep=""))
                        }
                      }
@@ -1463,7 +1470,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste("Down regulated genes")
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
                          sheet_numb <- sheet_numb + 1
@@ -1473,7 +1480,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Down regulated genes for', condition, '.csv',sep=""))
                        }
                      }
@@ -1492,7 +1499,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(str_replace_all(combo()[[i]],"[^[:alnum:]]",".")," ","_")
+                         condition<-str_replace_all(str_replace_all(combo[[i]],"[^[:alnum:]]",".")," ","_")
                          sheet_name<-paste('Down regulated TFs')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1503,7 +1510,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Down regulated TF for', condition, '.csv',sep=""))
                        }
                      }
@@ -1523,7 +1530,7 @@ powerpoint_module<-function(input,output,session,
                        if(nrow(data)>0)
                        {
                          if (as.numeric(input$datachoiceX==1)){
-                           condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                           condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                            sheet_name<-paste('Down reg., overrepresented TFs')
                            #write.csv(data, file)
                            sheet_numb <- sheet_numb + 1
@@ -1534,7 +1541,7 @@ powerpoint_module<-function(input,output,session,
                            writeData(wb = wb1, sheet = sheet_numb, x = M)
                          }
                          else{
-                           condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                           condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                            write.csv(data, file=paste(input$download_all_tables_path,'/Down reg., overrepresented TF for', condition, '.csv',sep=""))
                          }
                        }
@@ -1546,7 +1553,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Down regulated kegg pathways')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1557,7 +1564,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Down regulated kegg pathways for', condition, '.csv',sep=""))
                        }
                      }
@@ -1568,7 +1575,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Down regulated BPs')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1579,7 +1586,7 @@ powerpoint_module<-function(input,output,session,
                          writeData(wb = wb1, sheet = sheet_numb, x = M)
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Down regulated BP for', condition, '.csv',sep=""))
                        }
                      }
@@ -1600,7 +1607,7 @@ powerpoint_module<-function(input,output,session,
                      if(nrow(data)>0)
                      {
                        if (as.numeric(input$datachoiceX==1)){
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          sheet_name<-paste('Down regulated Hallmarks')
                          # write.csv(data, file)
                          file<-paste(input$download_all_tables_path,"/",condition,".xlsx",sep="")
@@ -1612,7 +1619,7 @@ powerpoint_module<-function(input,output,session,
                          saveWorkbook(wb1, file = paste(input$download_all_tables_path,"/",condition,".xlsx",sep=""), overwrite = T )
                        }
                        else{
-                         condition<-str_replace_all(combo()[[i]],"[^[:alnum:]]",".")
+                         condition<-str_replace_all(combo[[i]],"[^[:alnum:]]",".")
                          write.csv(data, file=paste(input$download_all_tables_path,'/Down regulated Hallmark gene sets for', condition, '.csv',sep=""))
                        }
                      }

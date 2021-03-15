@@ -126,7 +126,7 @@ CoCena_data_processing <- function(input,output,session,top_var,range_corr,min_c
       geom_point() +
       geom_smooth(method="lm") +
       theme_bw() + 
-      ggtitle(paste0("Custom cut-off: ",cut_off_set, "; RÂ²: ", round(stats[1],3), "; no. edges: ",
+      ggtitle(paste0("Custom cut-off: ",cut_off_set, "; R²: ", round(stats[1],3), "; no. edges: ",
                      stats[2], "; no. nodes: ", stats[3], "; no. networks: ", stats[4]))+
       theme(plot.title = element_text(size = 10))
     

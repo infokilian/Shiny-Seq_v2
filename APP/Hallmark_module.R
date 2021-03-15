@@ -42,7 +42,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
   #Please check msig database for more information on hallmark gene sets
   
   combo<-combination()
-  num<-length(combo())
+  num<-length(combo)
   
   Enriched_hall<-reactive({
     if (organism() %in% c("Homo sapiens", 
@@ -67,7 +67,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
     {
       if((length(wgcna_output()$modules())>0))
       {
-        num<-length(combo())
+        num<-length(combo)
         enrichment_main("hallmark",result(),organism(),dds.fc(),
                         num,wgcna_output()$modules(),wgcna_output()$WGCNA_matrix(),c1_hallmark,orgDB())
       }
@@ -76,7 +76,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
     {
       print("inside hallmark line 53")
       combo<-combination()
-      num<-length(combo())
+      num<-length(combo)
       enrichment_main("hallmark",result(),organism(),dds.fc(),
                       num,NULL,NULL,c1_hallmark,orgDB())
     }
@@ -93,7 +93,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
   output$Enriched_hall <- DT::renderDataTable({
     
       result<-Enriched_hall()[[1]]
-      num <- length(combo())
+      num <- length(combo)
       rows<-num
       modules<-NULL
       WGCNA_matrix<-NULL
@@ -105,7 +105,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
         {
           modules<-as.data.frame(table(wgcna_output()$modules()))
           colnames(modules)<-c("Var1","numbers")
-          entry<-c(as.vector(combo()), as.vector(modules$Var1))
+          entry<-c(as.vector(combo), as.vector(modules$Var1))
           rows<-length(entry)
           res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
           colnames(res)<-c('Up regulated','Down regulated','Regulated')
@@ -113,14 +113,14 @@ Hallmark_module<-function(input,output,session,DE_genes,
             unlist(entry[i])
             
           })
-          for(i in 1:length(combo()))
+          for(i in 1:length(combo))
           {
             res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
             res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
             res[i,3]<-0
           }
           
-          for(i in 1+length(combo()):nrow(modules))
+          for(i in 1+length(combo):nrow(modules))
           {
             res[i,1:2]<-0
             res[i,3]<-nrow(as.data.frame(result[[i]][3]))
@@ -130,13 +130,13 @@ Hallmark_module<-function(input,output,session,DE_genes,
       }
       else{
  
-        num <-length(combo())
-        res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 2))
-        rownames(res)<-lapply(1:length(combo()), function(i) {
-          combo()[[i]]
+        num <-length(combo)
+        res<-data.frame(matrix(NA, nrow = length(combo), ncol = 2))
+        rownames(res)<-lapply(1:length(combo), function(i) {
+          combo[[i]]
         })
         colnames(res)<-c('Enriched hallmark for Up-reg genes','Enriched hallmark for Down-reg genes')
-        for(i in 1:length(combo()))
+        for(i in 1:length(combo))
         {
           res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
           res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
@@ -177,13 +177,13 @@ Hallmark_module<-function(input,output,session,DE_genes,
         filename = function() 
         {
           if(as.numeric(input$datachoice11==1)){
-          condition <-combo()[[row]]
+          condition <-combo[[row]]
           if(col==1) paste('Up regulated hallmark for ',condition,'.xlsx')
           else if(col==2) paste('Down regulated hallmark for ',condition,'.xlsx')
           else if(col==3) paste('regulated hallmark for ',condition,'.xlsx')
           }
           else {
-            condition <-combo()[[row]]
+            condition <-combo[[row]]
             if(col==1) paste('Up regulated hallmark for ',condition,'.csv')
             else if(col==2) paste('Down regulated hallmark for ',condition,'.csv')
             else if(col==3) paste('regulated hallmark for ',condition,'.csv')
@@ -196,7 +196,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
           df<-as.data.frame(result[[row]][[col]])
           
           nam<-"Sheet 1"
-          condition <-combo()[[row]]
+          condition <-combo[[row]]
           condition<-str_replace_all(condition,"[^[:alnum:]]",".")
           if(col==1) nam<-paste('Up regulated hallmark for ',condition)
           else if(col==2) nam<-paste('Down regulated hallmark for ',condition)
@@ -250,7 +250,7 @@ Hallmark_module<-function(input,output,session,DE_genes,
         
         filename =function()
         {
-          condition <-combo()[[row]]
+          condition <-combo[[row]]
           if(col==1) paste('Barplot of Up regulated hallmarkP for ',condition,'.svg')
           else if(col==2) paste('Barplot of Down regulated hallmark for ',condition,'.svg')
         },

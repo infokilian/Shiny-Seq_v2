@@ -21,10 +21,10 @@ Venn_diagram_module<-function(input,output,session,DE_genes,
 
 output$de_venn <- DT::renderDataTable({
   
-    rows<-length(combo())
+    rows<-length(combo)
     modules<-NULL
     WGCNA_matrix<-NULL
-    res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
+    res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
     
     if(!is.null(wgcna_output()))
     {
@@ -33,7 +33,7 @@ output$de_venn <- DT::renderDataTable({
         mod<-wgcna_output()$modules()
         modules<-as.data.frame(table(mod))
         colnames(modules)<-c("Var1","numbers")
-        entry<-c(combo(), levels(modules$Var1))
+        entry<-c(combo, levels(modules$Var1))
         rows<-length(entry)
         res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
         colnames(res)<-c('Up regulated','Down regulated','Both')
@@ -41,13 +41,13 @@ output$de_venn <- DT::renderDataTable({
          entry[[i]]
         
         })
-       for(i in 1:length(combo()))
+       for(i in 1:length(combo))
        {
         res[i,1]<-nrow(as.data.frame(result()[[i]][1]))
         res[i,2]<-nrow(as.data.frame(result()[[i]][2]))
         res[i,3]<-nrow(as.data.frame(result()[[i]][3]))
        }
-       for(i in length(combo())+1:nrow(modules))
+       for(i in length(combo)+1:nrow(modules))
        {
         res[i,1:2]<-0
         res[i,3]<-result()[[i]][3]
@@ -55,12 +55,12 @@ output$de_venn <- DT::renderDataTable({
       }
     }
     else{
-      rownames(res)<-lapply(1:length(combo()), function(i) {
-        combo()[[i]]
+      rownames(res)<-lapply(1:length(combo), function(i) {
+        combo[[i]]
         
       })
       colnames(res)<-c('Up regulated','Down regulated','Both')
-      for(i in 1:length(combo()))
+      for(i in 1:length(combo))
       {
         res[i,1]<-nrow(as.data.frame(result()[[i]][1]))
         res[i,2]<-nrow(as.data.frame(result()[[i]][2]))
@@ -83,8 +83,8 @@ observeEvent(input$de_venn_cell_clicked,{
   
   selected <- input$de_venn_cells_selected
   venn_list<-list()
-  comp<-lapply(1:length(combo()), function(i) {
-    combo()[[i]]
+  comp<-lapply(1:length(combo), function(i) {
+    combo[[i]]
     
   })
   
@@ -95,9 +95,9 @@ observeEvent(input$de_venn_cell_clicked,{
       mod<-wgcna_output()$modules()
       modules<-as.data.frame(table(mod))
       colnames(modules)<-c("Var1","numbers")
-      entry<-c(combo(), levels(modules$Var1))
+      entry<-c(combo, levels(modules$Var1))
       rows<-length(entry)
-      entry<-c(as.vector(combo()), as.vector(modules$Var1))
+      entry<-c(as.vector(combo), as.vector(modules$Var1))
       comp<-lapply(1:rows, function(i) {
         entry[i]
     })
@@ -115,13 +115,13 @@ observeEvent(input$de_venn_cell_clicked,{
       row<-selected[i,1]
       col<-selected[i,2]
       genes<-NULL
-      if(row>length(combo()))
+      if(row>length(combo))
       {
         mod<-wgcna_output()$modules()
         modules<-as.data.frame(table(mod))
         colnames(modules)<-c("Var1","numbers")
         WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-        idx_w<-which(mod==modules$Var1[row-length(combo())])
+        idx_w<-which(mod==modules$Var1[row-length(combo)])
         genes<-colnames(WGCNA_matrix)[idx_w]
       }
       else

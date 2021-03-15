@@ -44,7 +44,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
                                   batch_corrected,anova_table,dds)
 {
   combo<-combination()
-  num<-length(combo())
+  num<-length(combo)
   DE_TF<-reactive({
     result_DE<-DE_genes()
     
@@ -55,7 +55,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
         mod<-wgcna_output()$modules()
         WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
         combo<-combination()
-        num<-length(combo())
+        num<-length(combo)
         Enriched_trasncription_factors(TF_list(),result_DE(),num,organism(),mod,WGCNA_matrix,
                                        anova_table(),conchoice(),dds())
       }
@@ -63,7 +63,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
     else
     {
       combo<-combination()
-      num<-length(combo())
+      num<-length(combo)
       Enriched_trasncription_factors(TF_list(),result_DE(),num,organism(),NULL,NULL,NULL,NULL,NULL)
     }
    
@@ -88,7 +88,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
       {
         modules<-as.data.frame(table(wgcna_output()$modules()))
         
-        entry<-c(as.vector(combo()), as.vector(modules$Var1))
+        entry<-c(as.vector(combo), as.vector(modules$Var1))
 
         rows<-length(entry)
         res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
@@ -98,13 +98,13 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
           unlist(entry[i])
           
         })
-        for(i in 1:length(combo()))
+        for(i in 1:length(combo))
         {
           res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
           res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
           res[i,3]<-nrow(as.data.frame(result[[i]][[3]]))
         }
-        for(i in 1+length(combo()):nrow(modules))
+        for(i in 1+length(combo):nrow(modules))
         {
           res[i,1:2]<-0
           res[i,3]<-0
@@ -113,13 +113,13 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
       }
     }
     else{
-      res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
-      rownames(res)<-lapply(1:length(combo()), function(i) {
-        combo()[[i]]
+      res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
+      rownames(res)<-lapply(1:length(combo), function(i) {
+        combo[[i]]
         
       })
       colnames(res)<-c('Up regulated','Down regulated','Both')
-      for(i in 1:length(combo()))
+      for(i in 1:length(combo))
       {
         res[i,1]<-nrow(as.data.frame(result[[i]][1]))
         res[i,2]<-nrow(as.data.frame(result[[i]][2]))
@@ -154,7 +154,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
         {
           if((length(wgcna_output()$modules())>0))
           {
-            if(row>length(combo())){
+            if(row>length(combo)){
             
               gene_list<-  as.data.frame(character())
             if(col==3) gene_list<-result[[row]][[4]]
@@ -166,7 +166,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
                           options = list(deferRender = TRUE,scrollX = TRUE,scrollY = 150,scroller = TRUE,dom = 'Bfrtip',
                                          buttons = list()))
             }
-            else if(row<=length(combo()))
+            else if(row<=length(combo))
               {
               df<-as.data.frame(result[[row]][[col]])
 
@@ -275,7 +275,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
           {
           if(row<=length(input$combination))
           {
-          condition<-combo()[[row]]
+          condition<-combo[[row]]
           if(col==1) paste('Up regulated TF for ',condition,'.xlsx')
           else if(col==2) paste('Down regulated TF for ',condition,'.xlsx')
           else paste('All DE TF for ',condition,'.xlsx')
@@ -292,7 +292,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
           
           if(row<=length(input$combination))
           {
-            condition<-combo()[[row]]
+            condition<-combo[[row]]
             if(col==1) paste('Up regulated TF for ',condition,'.csv')
             else if(col==2) paste('Down regulated TF for ',condition,'.csv')
             else paste('All DE TF for ',condition,'.csv')
@@ -323,7 +323,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
             colnames(df_final)[i]<-paste(colnames(df_final)[i],"mean")
           }
           nam<-"Sheet 1"
-          condition<-combo()[[row]]
+          condition<-combo[[row]]
           condition<-str_replace_all(condition,"[^[:alnum:]]",".")
           if(col==1) nam<-paste('Up regulated TF for ',condition)
           else if(col==2) nam<-paste('Down regulated TF for ',condition)
@@ -356,7 +356,7 @@ Enriched_markers_module<-function(input,output,session,call,TF_list,organism,
                 colnames(df_final)[i]<-paste(colnames(df_final)[i],"mean")
               }
               nam<-"Sheet 1"
-              condition<-combo()[[row]]
+              condition<-combo[[row]]
               condition<-str_replace_all(condition,"[^[:alnum:]]",".")
               if(col==1) nam<-paste('Up regulated TF for ',condition)
               else if(col==2) nam<-paste('Down regulated TF for ',condition)

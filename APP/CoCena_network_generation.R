@@ -289,4 +289,5 @@ CoCena_network_generation<-function(input,output,session,filt_cutoff,GFC_all_gen
     calc_network()[["plotted_network"]]
   })
   
+  return(list(cluster_calc=reactive({cluster_calc()})))
 }
