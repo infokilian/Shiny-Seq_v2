@@ -43,7 +43,7 @@ predicted_TF_module_UI<-function(id)
 }
 predicted_TF_module<-function(input,output,session,
                               DE_genes,dds.fc,anova_table,
-                              combination,conchoice,wgcna_output,
+                              combination,conchoice,CoCena,
                               organism,normal,batch_choice,batch_corrected,dataset)
 {
 
@@ -56,7 +56,10 @@ predicted_TF<-eventReactive(input$predicted,{
                      "Plasmodium falciparum",
                      "Others"))){
     closeAlert(session, "Error")
-  if(!is.null(wgcna_output)) predicted <- TF_prediciton_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(),wgcna_output(), organism(), dataset(), as.numeric(input$topTF))
+  if(!is.null(CoCena)){ 
+    cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+    predicted <- TF_prediciton_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(),cluster_info, organism(), dataset(), as.numeric(input$topTF))
+    }
     else predicted <- TF_prediction_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), as.numeric(input$topTF))
     predicted
   }else {
@@ -75,21 +78,17 @@ output$predicted_TF <- DT::renderDataTable({
 
     rows<-length(combo)
 
-    modules<-NULL
-    WGCNA_matrix<-NULL
     res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
-    if(!is.null(wgcna_output()))
+    if(!is.null(CoCena()))
     {
-      if((length(wgcna_output()$modules())>0))
-      {
         combo<-combination()
-        modules<-as.data.frame(table(wgcna_output()$modules()))
-        entry<-c(as.vector(combo), as.vector(modules$Var1))
+        cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+        entry<-c(as.vector(combo), as.vector(cluster_info$color))
 
         rows<-length(entry)
         
         res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
-        colnames(res)<-c('Up regulated','Down regulated','Regulated')
+        colnames(res)<-c('Predicted TF for Up-reg genes','Predicted TF for Down-reg genes','Predicted TF for All genes')
 
         rownames(res)<-lapply(1:rows, function(i) {
           unlist(entry[i])
@@ -103,14 +102,14 @@ output$predicted_TF <- DT::renderDataTable({
           res[i,3]<-nrow(as.data.frame(result[[i]][[3]]))
         }
         
-        for(i in 1:nrow(modules))
+        for(i in 1:nrow(cluster_info))
         {
 
           res[length(combo)+i,1:2]<-0
-          res[length(combo)+i,3]<-nrow(as.data.frame(result[[length(combo)+i]][3]))
+          res[length(combo)+i,3]<-nrow(as.data.frame(result[[length(combo)+i]][[3]]))
           
         }
-      }
+      
     }
     else{
       combo<-combination()
@@ -123,7 +122,6 @@ output$predicted_TF <- DT::renderDataTable({
 
       for(i in 1:length(combo))
       {
-        print(nrow(as.data.frame(result[[i]][[1]])))
         res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
         res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
         res[i,3]<-nrow(as.data.frame(result[[i]][[3]]))
@@ -306,6 +304,5 @@ observeEvent(input$predicted_TF_cell_clicked,{
     )
   }
 })
-
 
 }

@@ -430,7 +430,6 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
         #prepare output
         #Remove genes with foldhcange values =0
         resSig<- subset(res,log2FoldChange <0 || log2FoldChange>0)
-        print(nrow(resSig))
 
         #Merge the basemeans with the DE table
         temp1<-merge(resSig,base_mean,by=0,all=TRUE)

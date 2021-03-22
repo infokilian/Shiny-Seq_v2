@@ -141,6 +141,10 @@ Module_Normalized_data<-function(input,output,session,vdata,conchoice,designchoi
         genes_to_keep <- rowSums(counts(dds)) >= as.numeric(input$cutoff)
         dds <- dds[genes_to_keep,]
         dds <- DESeq(dds)
+        print("dds")
+        print(dds)
+        print(colData(dds))
+        
         dds.norm <- as.data.frame(counts(dds, normalized=T))
         
         if(identical(data[[4]], data[[1]]))

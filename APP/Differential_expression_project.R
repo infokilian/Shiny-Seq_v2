@@ -285,15 +285,6 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
     num <- length(input$combination)
     n<-num+2
 
-    #if(!is.null(wgcna_output()))
-    #{
-    #  if(length(wgcna_output()$modules())>0)
-    #  {
-    #    mod<-wgcna_output()$modules()
-    #    modules<-as.data.frame(table(mod))
-    #    n<-n+nrow(modules)
-    #  }
-    #}
 
     library('fdrtool')
     #Get the deseq2 dataset
@@ -329,7 +320,11 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
     for (i in 1:num)
     {
       cond1<-as.character(strsplit(input$combination[i],"  vs  ",fixed = T)[[1]][1])
+       print("cond1")
+       print(cond1)
       cond2<-as.character(strsplit(input$combination[i],"  vs  ",fixed = T)[[1]][2])
+       print("cond2")
+       print(cond2)
 
       if(hyp_choice[[i]]==1) # if hypothesis is default (null hypothesis is: there is no difference between any two condition/treatment groups)
       {
@@ -338,6 +333,8 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
         {
           if(input[[paste0("ind_choice",i)]]==FALSE){ #If FDR option is selected as false (no multiple testeing is done)
             res <- results(dds,pAdjustMethod = "none", contrast=c("condition",cond1,cond2))
+            print("res")
+            print(res)
             res.shr <- lfcShrink(dds=dds, contrast=c("condition",cond1,cond2), res=res)
           }
 
@@ -671,29 +668,19 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
 
     if(!is.null(CoCena()))
     {
-    #  if(length(wgcna_output()$modules())>0)
-    #  {
-      cluster_info<-CoCena()[,CoCena()$cluster_included=="yes",]
+      
+      cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
         # filter anova table from module genes
-      result_update <- list()
-      for(m in 1:length(input$combination)){
-          for(i in 1:nrow(cluster_info))
-            {
-            gene_cluster<-unlist(strsplit(cluster_info[i,"gene_n"],sep=","))
-            up_cluster<-base::intersect(gene_cluster,result[[m]][1])
-            down_cluster<-base::intersect(gene_cluster,result[[m]][2])
-            both_cluster<-base::union(up_cluster,down_cluster)
-    #      result[[length(result)+1]]<-list(0,0,modules$Freq[i],0,0)
+      for(i in 1:nrow(cluster_info)){
+            gene_cluster<-unlist(strsplit(cluster_info[i,"gene_n"],split=","))
+          result[[length(result)+1]]<-list(0,0,gene_cluster,0,0)
+       
           # Increment the progress bar, and update the detail text.
-    #      progress$inc(1/n, detail = paste("Doing part", num+2+i,"/",n))
+          progress$inc(1/n, detail = paste("Doing part", num+2+i,"/",n))
           # Pause for 0.1 seconds to simulate a long computation.
-    #      Sys.sleep(0.1)
+          Sys.sleep(0.1)
 
-          }
-        result_update<-
       }
-
-    #  }
     }
 
     result
@@ -718,34 +705,26 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
 
       if(!is.null(CoCena()))
       {
-        cluster_info<-CoCena()[,CoCena()$cluster_included=="yes",]
-        num<-nrow(cluster_info)
-        res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
-        
-          
-        
-          entry<-c(input$combination, levels(modules$Var1))
-          rows<-length(entry)
-          res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
-          colnames(res)<-c('Up regulated','Down regulated','Both')
-
-          entry<-c(as.vector(input$combination), as.vector(modules$Var1))
-          rownames(res)<-lapply(1:rows, function(i) {
-            entry[i]
-
-          })
+        cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+        print("cluster_info")
+        print(cluster_info)
+        res<-data.frame(matrix(NA, nrow = num+nrow(cluster_info), ncol = 3))
+        colnames(res)<-c('Up regulated','Down regulated','Both')
+        rowname_vector<-c()
           for(i in 1:num)
           {
             res[i,1]<-nrow(as.data.frame(result[[i]][1]))
             res[i,2]<-nrow(as.data.frame(result[[i]][2]))
             res[i,3]<-nrow(as.data.frame(result[[i]][3]))
+            rowname_vector[i]<-input$combination[i]
           }
-          
-          for(i in num+1:nrow(modules))
+          for(k in (num+1):(nrow(cluster_info)+num))
           {
-            res[i,1:2]<-0
-            res[i,3]<-result[[i]][[3]]
+            res[k,1:2]<-0
+            res[k,3]<-length(result[[k]][[3]])
+            rowname_vector[k]<-cluster_info$color[k-num]
           }
+          rownames(res)<-rowname_vector
         
       }
 
@@ -786,19 +765,14 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
 
       #table diaplyas the DE genes
       output$filtered_data <- DT::renderDataTable({
-        if(!is.null(wgcna_output()))
+        if(!is.null(CoCena()))
         {
-          if((length(wgcna_output()$modules())>0))
-          {
-            mod<-wgcna_output()$modules()
-            modules<-as.data.frame(table(mod))
-            colnames(modules)<-c("Var1","number")
+          cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
             num <- length(input$combination)
-            WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
             if(((col==3) && (row>length(input$combination))))
             {
-              idx_w<-which(mod==modules$Var1[row-num])
-              gene_list<-colnames(WGCNA_matrix)[idx_w]
+            
+              gene_cluster<-unlist(strsplit(cluster_info[(row-num),"gene_n"],split=","))
 
               #########preparing the anova table in the order as output#########
               a_tab<-anova_table()[,-c(2,3)]
@@ -809,7 +783,7 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
               all_genes=a_tab[,c(temp,c[2],c[3],temp2,c[1])]
               ##################################################################
               anova_genes<-rownames(all_genes)
-              df<-all_genes[which(anova_genes %in% gene_list),]
+              df<-all_genes[which(anova_genes %in% gene_cluster),]
 
               DT::datatable(df,class = 'cell-border stripe',
                             selection = list(mode='single',target = 'row'),
@@ -858,7 +832,7 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
                                            buttons = list()))
 
             }
-          }
+          
         }
 
         else
@@ -924,15 +898,10 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
           }
           else if(row>length(input$combination))
               {
-                mod<-wgcna_output()$modules()
-                modules<-as.data.frame(table(mod))
-                colnames(modules)<-c("Var1","number")
+                cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
                 num <- length(input$combination)
-                WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-                print(modules$Var1[row])
-                idx_w<-which(mod==modules$Var1[row-num])
-                gene_list<-colnames(WGCNA_matrix)[idx_w]
-              
+                gene_cluster<-unlist(strsplit(cluster_info[(row-num),"gene_n"],split=","))
+                
                 #########preparing the anova table in the order as output#########
                 a_tab<-anova_table()[,-c(2,3)]
                 cond<-unique(colData(dds.fc()[[1]])[,as.numeric(conchoice)])
@@ -943,7 +912,7 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
                 ##################################################################
                 print(head(all_genes))
                 anova_genes<-rownames(all_genes)
-                df_final<-all_genes[which(anova_genes %in% gene_list),]
+                df_final<-all_genes[which(anova_genes %in% gene_cluster),]
                 an_gene<-rownames(df_final)[selected_row]
               }
 
@@ -980,16 +949,14 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
           }
           else{
             if (as.numeric(input$datachoice4==1)){
-              mod<-wgcna_output()$modules()
-              modules<-as.data.frame(table(mod))
-              colnames(modules)<-c("Var1","number")
-              paste('ANOVA genes for ',modules$Var1[row],'.xlsx')
+              cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+              num <- length(input$combination)
+              paste('ANOVA genes for ',cluster_info$color[row-num],'.xlsx')
             }
             else if (as.numeric(input$datachoice4==2)){
-              mod<-wgcna_output()$modules()
-              modules<-as.data.frame(table(mod))
-              colnames(modules)<-c("Var1","number")
-              paste('ANOVA genes for ',modules$Var1[row],'.csv')
+              cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+              num <- length(input$combination)
+              paste('ANOVA genes for ',cluster_info$color[row-num],'.csv')
             }
 
           }
@@ -1029,15 +996,11 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
           {
             if(row>length(input$combination))
             {
-
-              mod<-wgcna_output()$modules()
-              modules<-as.data.frame(table(mod))
-              colnames(modules)<-c("Var1","number")
-              nam<-paste('ANOVA genes for ',modules$Var1[row])
+              cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
               num <- length(input$combination)
-              WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-              idx_w<-which(mod==modules$Var1[row-num])
-              gene_list<-colnames(WGCNA_matrix)[idx_w]
+              gene_cluster<-unlist(strsplit(cluster_info[(row-num),"gene_n"],split=","))
+              nam<-paste('ANOVA genes for ',modules$Var1[row-num])
+             
               #########preparing the anova table in the order as output#########
               a_tab<-anova_table()[,-c(2,3)]
               cond<-unique(colData(dds.fc()[[1]])[,as.numeric(conchoice)])
@@ -1048,7 +1011,7 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
               all_genes=a_tab[,c(temp,c[2],c[3],temp2,c[1])]
               ##################################################################
               anova_genes<-rownames(all_genes)
-              df_de<-all_genes[which(anova_genes %in% gene_list),]
+              df_de<-all_genes[which(anova_genes %in% gene_cluster),]
             }
           }
 
@@ -1092,14 +1055,11 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
               if(row>length(input$combination))
               {
 
-                mod<-wgcna_output()$modules()
-                modules<-as.data.frame(table(mod))
-                colnames(modules)<-c("Var1","number")
-                nam<-paste('ANOVA genes for ',modules$Var1[row])
+                cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
                 num <- length(input$combination)
-                WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-                idx_w<-which(mod==modules$Var1[row-num])
-                gene_list<-colnames(WGCNA_matrix)[idx_w]
+                gene_cluster<-unlist(strsplit(cluster_info[(row-num),"gene_n"],split=","))
+                nam<-paste('ANOVA genes for ',modules$Var1[row])
+             
                 #########preparing the anova table in the order as output#########
                 a_tab<-anova_table()[,-c(2,3)]
                 cond<-unique(colData(dds.fc()[[1]])[,as.numeric(conchoice)])

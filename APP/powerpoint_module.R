@@ -141,13 +141,13 @@ powerpoint_module<-function(input,output,session,
                      rld<-NULL
                      if(!is.null(batch_choice()) && as.numeric(batch_choice()==1))
                      {
-                       rld<-pca_input_norm()[[3]]
+                       rld<-assay(dds.fc2()[[1]])
                      }
                      else rld<-batch_corrected()
 
-                     anova_heatmap_1000 <- heatmap_genes("ANOVA",dds(),dds.fc(),rld,
+                     anova_heatmap_1000 <- heatmap_genes("ANOVA",dds(),dds.fc2()[[1]],rld,
                                                          1,
-                                                         DE_genes,NULL,NULL,
+                                                         DE_genes(),NULL,
                                                          NULL,
                                                          "Heatmap of 1000 most variable genes",
                                                          input_Distance_anova(),input_Linkage_anova())
@@ -251,13 +251,13 @@ powerpoint_module<-function(input,output,session,
                        rld<-NULL
                        if(!is.null(batch_choice()) && as.numeric(batch_choice()==1))
                        {
-                         rld<-pca_input_norm()[[3]]
+                         rld<-assay(dds.fc2()[[1]])
                        }
                        else rld<-batch_corrected()
 
-                       h_de_genes<-heatmap_genes("DE",NULL,dds.fc(),rld,i,
-                                        DE_genes,NULL,NULL,
-                                        num,paste("Heatmap of DE genes for ",name),
+                       h_de_genes<-heatmap_genes("DE",NULL,dds.fc2()[[1]],rld,i,
+                                        DE_genes(),NULL,
+                                        length(combo),paste("Heatmap of DE genes for ",name),
                                         input_Distance_de(),input_Linkage_de())
 
                          png(nam1,width = 12, height = 12, units = "cm", res = 600)
@@ -269,9 +269,9 @@ powerpoint_module<-function(input,output,session,
                       if(organism()%in% c("Homo sapiens", "Mus musculus")){
                        if(!is.null(result_tf))
                        {
-                         h_de_tf<-heatmap_genes("TF",NULL,dds.fc(),rld,i,
-                                          DE_TF,NULL,NULL,
-                                          num,paste("Heatmap of TF genes for ",name),
+                         h_de_tf<-heatmap_genes("TF",NULL,dds.fc2()[[1]],rld,i,
+                                          DE_TF(),NULL,
+                                          length(combo),paste("Heatmap of TF genes for ",name),
                                           input_Distance_tf(),input_Linkage_tf())
 
                            png(nam,width = 12, height = 12, units = "cm", res = 600)

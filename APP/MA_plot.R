@@ -14,11 +14,13 @@ MA_plot<-function(input,output,session,combination,DE_genes,p_values)
   combo<-combination()
   #combinations: Display comparisons A vs B , C Vs D etc
   output$ma_comb <- renderUI({
-    if(!is.null(combo))
+    if(!is.null(combo()))
     {
-      num<- length(combo)
+      num<- length(combo())
+      print("combo")
+      print(combo)
       comb<-lapply(1:num, function(i) {
-        combo[[i]]
+        combo()[[i]]
         
       })
       
@@ -34,14 +36,14 @@ MA_plot<-function(input,output,session,combination,DE_genes,p_values)
   #ma plot for the comparison selected
   output$MA_ploti<- renderPlot({
 
-    ma_plot(input$ma_choice,combo,DE_genes(),input$scale,p_values())
+    ma_plot(input$ma_choice,combo(),DE_genes(),input$scale,p_values())
     
   })
   
   #download MA plot
   output$download_ma_plot <- downloadHandler(
     filename = function(){
-      paste("MA plot",combo[as.numeric(input$ma_choice)],".png", sep = "")},
+      paste("MA plot",combo()[as.numeric(input$ma_choice)],".png", sep = "")},
     content = function(file) {
 
       png(filename=file, height = 10, width = 20, units = "cm", res = 600)

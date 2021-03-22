@@ -528,7 +528,7 @@ enrichment_function<-function(enrichment_type,enrichment_input)
 }
 
 
-enrichment_main<-function(enrichment_type,result,input_organism,dds.fc,num,mod,WGCNA_matrix,c1_hallmark,orgDB)
+enrichment_main<-function(enrichment_type,result,input_organism,dds.fc,num,CoCena,c1_hallmark,orgDB)
 {
   # Create a Progress object
   progress <- shiny::Progress$new()
@@ -565,11 +565,11 @@ enrichment_main<-function(enrichment_type,result,input_organism,dds.fc,num,mod,W
                             #pertaining to the selected pathway and the corresponding foldchange values)
   k<-0
   
-#if wgcna is performed then we perform enrichment analysis on the 
-if(length(mod)>0)
+#if CoCena is performed then we perform enrichment analysis on the 
+if(!is.null(CoCena))
     {
-      modules<-as.data.frame(table(mod))
-      n<-n+nrow(modules)
+      cluster_info<-CoCena
+      n<-n+nrow(cluster_info)
     }
 
 for(i in 1:num) # looping through all DE comparisons
@@ -609,7 +609,6 @@ if ((enrichment_type=="kegg") && (!(input_organism %in% c("Homo sapiens", "Mus m
           df$entrez<-reg[idx,]$ENTREZID
           gene_symbol<-reg$SYMBOL[idx]
           entrez_id<-df$entrez[!is.na(df$entrez)]
-
 
         }
         if(enrichment_type=="kegg")
@@ -692,17 +691,16 @@ if ((enrichment_type=="kegg") && (!(input_organism %in% c("Homo sapiens", "Mus m
     Enriched_list[[i]]<-e_list
     Enriched_obj[[i]]<-e_obj
     Enriched_Kegg_gene[[i]]<-kegg_genelist
-  }
-if(length(mod)>0) 
+}
+  
+if(!is.null(CoCena)) 
     {
-      modules<-as.data.frame(table(mod))
-      colnames(modules)<-c("Var1","number")
-      #WGCNA_matrix
-      for(i in 1:nrow(modules))
+      #CoCena
+    cluster_info<-CoCena
+      for(i in 1:nrow(cluster_info))
       {
-        idx_w<-which(mod==modules$Var1[i])
-        DEG<-colnames(WGCNA_matrix)[idx_w]
-        
+        DEG<-unlist(strsplit(cluster_info$gene_n[i], split = ","))
+        print(str(DEG))
         e_list<-list()
         e_obj<-list()
         k<-k+1
@@ -713,71 +711,30 @@ if(length(mod)>0)
           gene_symbol<-NULL
           obj<-NULL
           
-          if((enrichment_type=="hallmark") && (as.numeric(input_organism)==2))
+          if ((enrichment_type=="kegg") && (!(input_organism %in% c("Homo sapiens", "Mus musculus"))))
           {
-            genes_de = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = as.character(DEG), mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
-            reg = bitr(genes_de[,2], fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
-            idx <- match(genes_de[,2],reg$SYMBOL)
-            entrez<-reg[idx,]$ENTREZID
-            gene_symbol<-reg$SYMBOL[idx]
-            entrez_id<-entrez[!is.na(entrez)]
-          }
-          else if((enrichment_type=="hallmark") && (as.numeric(input_organism)==3))
-          {
-            genes_de = getLDS(attributes = c("external_gene_name"), filters = "external_gene_name", values = as.character(DEG), mart = drosophila, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
-            reg = bitr(genes_de[,2], fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
-            idx <- match(genes_de[,2],reg$SYMBOL)
-            entrez<-reg[idx,]$ENTREZID
-            gene_symbol<-reg$SYMBOL[idx]
-            entrez_id<-entrez[!is.na(entrez)]
-          }
-          else if((enrichment_type=="hallmark") && (as.numeric(input_organism)==4))
-          {
-            genes_de = getLDS(attributes = c("external_gene_name"), filters = "external_gene_name", values = as.character(DEG), mart = celegans, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
-            reg = bitr(genes_de[,2], fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Hs.eg.db")
-            idx <- match(genes_de[,2],reg$SYMBOL)
-            entrez<-reg[idx,]$ENTREZID
-            gene_symbol<-reg$SYMBOL[idx]
-            entrez_id<-entrez[!is.na(entrez)]
-          }
-          else if ((enrichment_type=="kegg") && (as.numeric(input_organism)==3))
-          {
-            genes_de <- as.character(DEG)
-            entrez_id <- c()
-            for (m in 1:length(DEG)){
-              entrez_id[m] <- paste0("Dmel_",genes_de[m])
-            }
+            genes_de_uni <- bitr(DEG, fromType = "SYMBOL", toType = "UNIPROT",org)
+            entrez_id <- bitr_kegg(genes_de_uni[,2], fromType = "uniprot", toType = "kegg",organism)[,2]
+            entrez_id <- entrez_id[!is.na(entrez_id)]
             reg=AnnotationDbi::select(org,DEG,"ENTREZID","SYMBOL",multiVals="first")
             idx <- match(DEG, reg$SYMBOL)
-            df$entrez<-reg[idx,]$ENTREZID
+            entrez<-reg[idx,]$ENTREZID
             gene_symbol<-reg$SYMBOL[idx]
-          }
-          else if ((enrichment_type=="kegg") && (as.numeric(input_organism)==4))
-          {
-            genes_de <- as.character(DEG)
-            entrez_id <- c()
-            for (m in 1:length(DEG)){
-              entrez_id[m] <- paste0("CELE_",genes_de[m])
-            }
-            reg=AnnotationDbi::select(org,DEG,"ENTREZID","SYMBOL",multiVals="first")
+            
+          } else {
+            #convert de gene names to entrez id(input format required to perform enrichment analysis)
+            reg=AnnotationDbi::select(org,DEG,"ENTREZID", "SYMBOL",multiVals="first")
             idx <- match(DEG, reg$SYMBOL)
-            df$entrez<-reg[idx,]$ENTREZID
-            gene_symbol<-reg$SYMBOL[idx]
-          }
-          else
-          {
-            #convert de gene names to entrez id(input format required to perform enrichment analysis) 
-            #get entrez id of genes 
-            reg=AnnotationDbi::select(org,DEG,"ENTREZID","SYMBOL",multiVals="first")
-            idx <- match(DEG,reg$SYMBOL) #match gene name to entrez id
             entrez<-reg[idx,]$ENTREZID
             gene_symbol<-reg$SYMBOL[idx]
             entrez_id<-entrez[!is.na(entrez)]
+            
           }
           if(enrichment_type=="kegg")
           {
             input<-list(entrez_id,organism)
             obj<-enrichment_function("kegg",input)
+
           }
           else if(enrichment_type=="hallmark")
           {
@@ -788,8 +745,9 @@ if(length(mod)>0)
           {
             input<-list(entrez_id,All_genes$ENTREZID,org)
             obj<-enrichment_function("biological process",input)
+          
           }
-
+          df_obj<-NULL
           if(!is.null(obj))
           {
             if(nrow(as.data.frame(summary(obj)))>0)
@@ -841,7 +799,6 @@ if(length(mod)>0)
         # Pause for 0.1 seconds to simulate a long computation.
         Sys.sleep(0.1)
       }
-      
     }
   
   return(list(Enriched_list,Enriched_obj,Enriched_Kegg_gene))
@@ -919,8 +876,8 @@ enrichment_plot<-function(enrichment_type,result,res,row,col,category,category_g
   }
 }
 ####Compute transcription factors from a list
-Enriched_trasncription_factors<-function(TF_list,result,num,input_organism,mod,
-                                         WGCNA_matrix,anova_table,conchoice,dds.fc)
+Enriched_transcription_factors<-function(TF_list,result,num,input_organism,CoCena,
+                                         anova_table,conchoice,dds.fc)
 {
   if (!is.null(TF_list)){  
     #get all de genes
@@ -941,55 +898,26 @@ Enriched_trasncription_factors<-function(TF_list,result,num,input_organism,mod,
       }
       DE_TF[[i]]<-TF
     }
-    if((length(mod)>0))
+    if(!is.null(CoCena))
     {
-      modules<-as.data.frame(table(mod))
-      colnames(modules)<-c("Var1","Freq")
-
+      cluster_info<-CoCena
       #########preparing the anova table in the order as output#########
       a_tab<-anova_table[,-c(2,3)]
       cond<-unique(colData(dds.fc)[,as.numeric(conchoice)])
-      print(cond)
       c<-colnames(a_tab)
       temp<-as.vector(c[4:(3+length(cond))])
       temp2<-as.vector(c[(length(cond)+4):length(c)])
       all_genes=a_tab[,c(temp,c[2],c[3],temp2,c[1])]
       ##################################################################
-      for(i in 1:nrow(modules))
+      for(i in 1:nrow(cluster_info))
       {
-        idx_w<-which(mod==modules$Var1[i])
-        DEG<-colnames(WGCNA_matrix)[idx_w]
-        if(as.numeric(input_organism)==1)
-        {
-          genelist<-DEG[which(DEG %in% TF_list$Human)]
+        
+        DEG<-unlist(strsplit(cluster_info$gene_n[i], split=","))
+          genelist<-DEG[which(DEG %in% TF_list)]
           anova_genes<-rownames(all_genes)
           df_final<-all_genes[which(anova_genes %in% genelist),]
-          DE_TF[[num+i]]<-list(character(0),character(0),genelist,df_final)
-        }
-        else if (as.numeric(input_organism)==2)
-        {
-          genelist<-DEG[which(DEG %in% TF_list$Mouse)]
-          anova_genes<-rownames(all_genes)
-          df_final<-all_genes[which(anova_genes %in% genelist),]
-          DE_TF[[num+i]]<-list(character(0),character(0),genelist,df_final)
-          
-        }
-        else if (as.numeric(input_organism)==3)
-        {
-          genelist<-DEG[which(DEG %in% TF_list$Drosophila)]
-          anova_genes<-rownames(all_genes)
-          df_final<-all_genes[which(anova_genes %in% genelist),]
-          DE_TF[[num+i]]<-list(character(0),character(0),genelist,df_final)
-          
-        }
-        else if (as.numeric(input_organism)==4)
-        {
-          genelist<-DEG[which(DEG %in% TF_list$Drosophila)]
-          anova_genes<-rownames(all_genes)
-          df_final<-all_genes[which(anova_genes %in% genelist),]
-          DE_TF[[num+i]]<-list(character(0),character(0),genelist,df_final)
-          
-        }
+          DE_TF[[num+i]]<-list(NULL,NULL,df_final)
+        
       }
       
     }
@@ -998,7 +926,7 @@ Enriched_trasncription_factors<-function(TF_list,result,num,input_organism,mod,
 }
 #Heatmap function for either DE genes/DE transcription factors and ANOVA
 heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
-                        DE_genes,mod,WGCNA_matrix,num,heatmap_name,
+                        DE_genes,cluster_info,num,heatmap_name,
                         Distance,Linkage)
 {
   
@@ -1017,17 +945,13 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   {
     if(!is.null(heat_choice))
     {
-      result<-DE_genes()
+      result<-DE_genes
       DEG<-NULL
       
-     # if(as.numeric(heat_choice)>num)
-      #{
-      #  modules<-as.data.frame(table(mod))
-      #  colnames(modules)<-c("Var1","numbers")
-      #  idx_w<-which(mod==modules$Var1[as.numeric(heat_choice)-num])
-      #  print("inside function line 1161")
-      #  DEG<-colnames(WGCNA_matrix)[idx_w]#all module genes
-    #  }
+     if(as.numeric(heat_choice)>num)
+      {
+        DEG<-unlist(strsplit(cluster_info$gene_n[as.numeric(heat_choice)-num], split=","))
+      }
 
         DEG<-as.data.frame(result[[as.numeric(heat_choice)]][[3]])[,1]
         
@@ -1040,7 +964,7 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   {
     if(!is.null(heat_choice))
     {
-      result<-DE_genes()
+      result<-DE_genes
 
       DEG<-NULL
       
@@ -1049,11 +973,11 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
         
         DEG<-result[[as.numeric(heat_choice)]][[3]]
       }
-      else
-      {
+      
+      
 
         DEG<-rownames(result[[as.numeric(heat_choice)]][[3]])
-      }
+      
 
       topVarGenes<-which(rownames(rld) %in% DEG)
 
@@ -1063,7 +987,7 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   {
     if(!is.null(heat_choice))
     {
-      result<-DE_genes()
+      result<-DE_genes
       DEG<-NULL
       
       if(as.numeric(heat_choice)>num)
@@ -1330,7 +1254,7 @@ p_value_all<-function(result,p_choice,combination)
 
 #TF prediction using ChEA3
 TF_prediciton_ChEA3<-function(DE_genes,dds.fc,anova_table,
-                                combination,conchoice,wgcna_output,
+                                combination,conchoice,CoCena,
                                 organism,dataset, topTF){
 # Create a Progress object
 progress <- shiny::Progress$new()
@@ -1495,26 +1419,15 @@ for(i in 1:length(combo))
   All_idx[[i]]<-idx_pred
 
 }
-if(!is.null(wgcna_output))
+if(!is.null(CoCena))
 {
-  if((length(wgcna_output$modules)>0))
-  {
-    mod<- wgcna_output()$modules()
-    modules<-as.data.frame(table(mod))
-    colnames(modules)<-c("Var1","number")
-    WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-    for(i in 1:nrow(modules))
+  cluster_info<-CoCena
+    for(i in 1:nrow(cluster_info))
     {
-      
-      print('freq')
-      print(modules$Freq[i])
-      
-      idx_w<-which(mod==modules$Var1[i])
-      DEG<-colnames(WGCNA_matrix)[idx_w]
+      DEG<-unlist(strsplit(cluster_info$gene_n[i], split = ","))
       if(!identical(character(0),DEG))
       {
-        if(organism() %in% c("Homo sapiens", "Mus musculus"))
-        {
+        if(organism == "Homo sapiens"){
           url = "https://amp.pharm.mssm.edu/chea3/api/enrich/"
           encode = "json"
           payload = list(query_name = "myQuery", gene_set = DEG)
@@ -1530,22 +1443,49 @@ if(!is.null(wgcna_output))
           # extract those from meanRank since meanRank scored as best method:
           TF_table <- TF_table[,c("TF", "Score", "Overlapping_Genes")]
           TF_table$Score <- as.numeric(TF_table$Score)
-          TF_table <- TF_table[TF_table$Score <= 100,]
-          TFs <- TF_table$TF
-        }
-        else
-        {
-          human = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
-          drosophila = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = "dmelanogaster_gene_ensembl")
+          if (topTF < nrow(TF_table)) TF_table = TF_table[1:topTF,]
+          TFs <- as.character(TF_table$TF)
           
-          human_gene <- getLDS(attributes = c("external_gene_name"), filters = "external_gene_name", values = DEG , mart = drosophila, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+          
+        } else if(organism == "Mus musculus"){
+          url = "https://amp.pharm.mssm.edu/chea3/api/enrich/"
+          encode = "json"
+          payload = list(query_name = "myQuery", gene_set = DEG)
+          
+          #POST to ChEA3 server
+          response = POST(url = url, body = payload, encode = encode)
+          json = httr::content(response, as = "text")
+          
+          #results as list of R dataframes
+          TF_table = fromJSON(json)
+          TF_table <- TF_table$`Integrated--meanRank`
+          
+          # extract those from meanRank since meanRank scored as best method:
+          TF_table <- TF_table[,c("TF", "Score", "Overlapping_Genes")]
+          TF_table$Score <- as.numeric(TF_table$Score)
+          
+          if (topTF< nrow(TF_table)) TF_table = TF_table[1:topTF,]
+          
+          #change back to mouse symobls
+          human = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+          mouse = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = dataset)
+          
+          mouse_gene = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = TF_table$TF , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+          TFs <- mouse_gene[, 2]
+          
+          
+          
+        } else {
+          human = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+          chosen_organism = useMart(host = "https://nov2020.archive.ensembl.org","ENSEMBL_MART_ENSEMBL", dataset = dataset)
+          
+          human_gene <- getLDS(attributes = c("external_gene_name"), filters = "external_gene_name", values = DEG , mart = chosen_organism, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
           DEG <- human_gene[, 2]
           
           url = "https://amp.pharm.mssm.edu/chea3/api/enrich/"
           encode = "json"
           payload = list(query_name = "myQuery", gene_set = DEG)
           
-          #POST to ChEA3 server
           response = POST(url = url, body = payload, encode = encode)
           json = httr::content(response, as = "text")
           
@@ -1557,44 +1497,41 @@ if(!is.null(wgcna_output))
           TF_table <- TF_table[,c("TF", "Score", "Overlapping_Genes")]
           TF_table$Score <- as.numeric(TF_table$Score)
           
-          TF_table <- TF_table[TF_table$Score <= 100,]
-          TFs <- TF_table$TF
+          if (topTF< nrow(TF_table)) TF_table = TF_table[1:topTF,]
           
-          fly_gene = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = TFs , mart = human, attributesL = c("external_gene_name"), martL = drosophila, uniqueRows=T)
-          TFs <- fly_gene[, 2]
+          chosen_organism_gene = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = TFs , mart = human, attributesL = c("external_gene_name"), martL = chosen_organism, uniqueRows=T)
+          TFs <- chosen_organism_gene[, 2]
         } 
         
         if(!is.null(TFs))
         {
           
-          d<-data.frame(matrix(NA, nrow = 0, ncol = 1))
-          Enriched_dt[[length(Enriched_dt)+1]]<-list(NULL,NULL,all_genes[which(rownames(all_genes) %in% TFs),])
-          All_pred_tf[[length(All_pred_tf)+1]]<-list(d,d,TF_table)#TFs
-          anova_genes<-rownames(all_genes[which(rownames(all_genes) %in% TFs),])
-          de_genes_pred_idx<-which(anova_genes %in% DEG)
-          All_idx[[length(All_idx)+1]]<-list(NULL,NULL,NULL)#de_genes_pred_idx)
+          dt[[length(dt)+1]]<-all_genes[as.character(rownames(all_genes)) %in% TFs,]
+          All_pred[[length(All_pred)+1]]<-TF_table
+          de_genes_pred_idx<- rownames(all_genes)[as.character(rownames(all_genes)) %in% rownames(res)]
+          idx_pred[[length(idx_pred)+1]]<-de_genes_pred_idx
           
         }
         else
         {
-          d<-data.frame(matrix(NA, nrow = 0, ncol = 1))
-          Enriched_dt[[length(Enriched_dt)+1]]<-list(NULL,NULL,NULL)
-          All_pred_tf[[length(All_pred_tf)+1]]<-list(d,d,d)
-          All_idx[[length(All_idx)+1]]<-list(NULL,NULL,NULL)
+          dt[[length(dt)+1]]<-NULL
+          All_pred[[length(All_pred)+1]]<-NULL
+          idx_pred[[length(idx_pred)+1]]<-NULL
         }
         
         
       }
       else
       {
-        d<-data.frame(matrix(NA, nrow = 0, ncol = 1))
-        Enriched_dt[[length(Enriched_dt)+1]]<-list(NULL,NULL,NULL)
-        All_pred_tf[[length(All_pred_tf)+1]]<-list(d,d,d)
-        All_idx[[length(All_idx)+1]]<-list(NULL,NULL,NULL)
+        dt[[length(dt)+1]]<-NULL
+        All_pred[[length(All_pred)+1]]<-NULL
+        idx_pred[[length(idx_pred)+1]]<-NULL
       }
+      
+      Enriched_dt[[length(Enriched_dt)+1]]<-dt
+      All_pred_tf[[length(All_pred_tf)+1]]<-All_pred
+      All_idx[[length(All_idx)+1]]<-idx_pred  
     }
-    
-  }
 }
 
 return(list(Enriched_dt,All_pred_tf,All_idx))
@@ -1714,7 +1651,7 @@ cutoff_prep=function(cutoff, corrdf_r, min_nodes_network){
   
 }
 
-#calculate optimal R² cutoff
+#calculate optimal minimal correlation cutoff
 optcut_fun <- function(cutoff_stats){
   
   output <- list()
@@ -1755,7 +1692,7 @@ optcut_fun <- function(cutoff_stats){
     geom_point() +
     geom_smooth(method="lm") +
     theme_bw() + 
-    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; R²: ", round(stats[1],3), "; no. edges: ",
+    ggtitle(paste0("Calculated optimal correlation cut-off :",calculated_optimal_cutoff,"; R.squared: ", round(stats[1],3), "; no. edges: ",
                    stats[2], "; no. nodes: ", stats[3], "; no. networks: ", stats[4]))
   
   
@@ -1774,7 +1711,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
   
   
   p1 <- plot_ly(cutoff_stats, x = ~corr, y = ~R.squared, type = 'scatter', 
-                mode = 'lines+markers', name = "R²", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
+                mode = 'lines+markers', name = "R.squared", line = list(color = "lightblue"), marker = list(color = "lightblue")) 
   p2 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_edges, type = 'scatter', 
                 mode = 'lines+markers', name = "no. edges", line = list(color = "orange"), marker = list(color = "orange"))
   p3 <- plot_ly(cutoff_stats, x = ~corr, y = ~no_nodes, type = 'scatter', 
@@ -1790,7 +1727,7 @@ plot_cutoffs_internal <- function(cutoff_stats,
                                                  rep("orange", length(cutoff_stats$corr)),
                                                  rep("lightgreen", length(cutoff_stats$corr)),
                                                  rep("yellow", length(cutoff_stats$corr)))), 
-                 label = paste0(as.character(cutoff_stats$corr[i]), ", R²: ", 
+                 label = paste0(as.character(cutoff_stats$corr[i]), ", R.squared: ", 
                                 round(cutoff_stats$R.squared[i], 3),
                                 "; no. edges: ", cutoff_stats$no_edges[i], "; no. nodes: ", 
                                 cutoff_stats$no_nodes[i], "; no. networks: ", cutoff_stats$no_of_networks[i]), 

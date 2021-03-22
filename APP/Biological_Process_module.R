@@ -34,7 +34,7 @@ Biological_process_module_UI<-function(id)
 }
 
 Biological_process_module<-function(input,output,session,DE_genes,
-                                    organism,dds.fc,combination,wgcna_output,orgDB)
+                                    organism,dds.fc,combination,CoCena,orgDB)
 {
   #Compute the GO terms based on a list for a list of DE genes(uses function enrichGO from clusterprofiler)
   #Construct  a matrix where row->comparison A vs B, C vs D .etc
@@ -44,7 +44,7 @@ Biological_process_module<-function(input,output,session,DE_genes,
   #enrichment analysis
   
   combo<-combination()
-  num<-length(combo)
+  num<-length(combo())
   
   
 Enriched_BP<-reactive({
@@ -54,20 +54,19 @@ Enriched_BP<-reactive({
     print("inside biological process line 39")
     result<-DE_genes()
    
-      if(!is.null(wgcna_output()))
+      if(!is.null(CoCena()))
       {
-        if((length(wgcna_output()$modules())>0))
-        {
+        cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
           enrichment_main("biological process",result(),organism(),dds.fc(),
-                          length(combo),wgcna_output()$modules(),wgcna_output()$WGCNA_matrix(),NULL,orgDB())
-        }
+                          length(combo()),cluster_info,NULL,orgDB())
+        
       }
       else
       {
         combo<-combination()
-        num<-length(combo)
+        num<-length(combo())
         enrichment_main("biological process",result(),organism(),dds.fc(),
-                        num,NULL,NULL,NULL,orgDB())
+                        num,NULL,NULL,orgDB())
       }
   } else {
       createAlert(session, "Others", "NotOthers", title = "Error",
@@ -84,48 +83,43 @@ output$Enriched_bp <- DT::renderDataTable({
       WGCNA_matrix<-NULL
       res<-NULL
       
-      if(!is.null(wgcna_output()))
+      if(!is.null(CoCena()))
       {
-        if((length(wgcna_output()$modules())>0))
-        {
-          modules<-as.data.frame(table(wgcna_output()$modules()))
-          colnames(modules)<-c("Var1","number")
-          
-          entry<-c(as.vector(combo), as.vector(modules$Var1))
+          cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+          entry<-c(as.vector(combo()), as.vector(cluster_info$color))
           rows<-length(entry)
           
           res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
-          colnames(res)<-c('Up regulated','Down regulated','Regulated')
+          colnames(res)<-c('Enriched BP for Up-reg genes','Enriched BP for Down-reg genes', 'Enriched BP for included genes')
           rownames(res)<-lapply(1:rows, function(i) {
             unlist(entry[i])
             
           })
           
-          for(i in 1:length(combo))
+          for(i in 1:length(combo()))
           {
             res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
             res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
             res[i,3]<-0
           }
           
-          for(i in 1+length(combo):nrow(modules))
+          for(i in (1+length(combo())):(nrow(cluster_info)+length(combo())))
           {
             res[i,1:2]<-0
-            res[i,3]<-nrow(as.data.frame(result[[i]][3]))
+            res[i,3]<length(result[[i]][[3]])
             
           }
-        }
       }
       else
       {
-        res<-data.frame(matrix(NA, nrow = length(combo), ncol = 2))
-        rownames(res)<-lapply(1:length(combo), function(i) {
-          combo[[i]]
+        res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 2))
+        rownames(res)<-lapply(1:length(combo()), function(i) {
+          combo()[[i]]
           
         })
         colnames(res)<-c('Enriched BP for Up-reg genes','Enriched BP for Down-reg genes')
 
-        for(i in 1:length(combo))
+        for(i in 1:length(combo()))
         {
           res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
           res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
@@ -171,12 +165,12 @@ output$Enriched_bp <- DT::renderDataTable({
         filename = function() 
         {
           if(as.numeric(input$datachoice10==1)){
-          condition <-combo[[row]]
+          condition <-combo()[[row]]
           if(col==1) paste('Up regulated BP for ',condition,'.xlsx')
           else if(col==2) paste('Down regulated BP for ',condition,'.xlsx') 
           }
           else {
-            condition <-combo[[row]]
+            condition <-combo()[[row]]
             if(col==1) paste('Up regulated BP for ',condition,'.csv')
             else if(col==2) paste('Down regulated BP for ',condition,'.csv') 
           }
@@ -188,7 +182,7 @@ output$Enriched_bp <- DT::renderDataTable({
           
           df<-as.data.frame(result[[row]][[col]])
           nam<-'Sheet1'
-          condition <-combo[[row]]
+          condition <-combo()[[row]]
           condition<-str_replace_all(condition,"[^[:alnum:]]",".")
           if(col==1) nam<-paste('Up regulated BP for ',condition)
           else if(col==2) nam<-paste('Down regulated BP for ',condition)
@@ -242,7 +236,7 @@ output$Enriched_bp <- DT::renderDataTable({
         
         filename =function()
         {
-          condition <-combo[[row]]
+          condition <-combo()[[row]]
           if(col==1) paste('Barplot of Up regulated BP for ',condition,'.pdf')
           else if(col==2) paste(' Barplot of Down regulated BP for ',condition,'.pdf')
         },

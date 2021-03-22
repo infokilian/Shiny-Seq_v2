@@ -11,60 +11,58 @@ Venn_diagram_module_UI<-function(id)
 }
 
 Venn_diagram_module<-function(input,output,session,DE_genes,
-                                      combination,wgcna_output)
+                                      combination,CoCena)
 {
   combo<-combination()
-  result<-DE_genes()
  
 #######venn diagram#####
 #display interactive table that summarizes DE genes identified for comparisons
 
 output$de_venn <- DT::renderDataTable({
-  
-    rows<-length(combo)
-    modules<-NULL
-    WGCNA_matrix<-NULL
-    res<-data.frame(matrix(NA, nrow = length(combo), ncol = 3))
     
-    if(!is.null(wgcna_output()))
+  result<-DE_genes()  
+    rows<-length(combo())
+    res<-data.frame(matrix(NA, nrow = length(combo()), ncol = 3))
+    
+    if(!is.null(CoCena()))
     {
-      if((length(wgcna_output()$modules())>0))
-      {
-        mod<-wgcna_output()$modules()
-        modules<-as.data.frame(table(mod))
-        colnames(modules)<-c("Var1","numbers")
-        entry<-c(combo, levels(modules$Var1))
+        print("combo()")
+        print(combo())
+        cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+        entry<-c(combo(), cluster_info$color)
+        print("entry")
+        print(length(entry))
         rows<-length(entry)
         res<-data.frame(matrix(NA, nrow = rows, ncol = 3))
         colnames(res)<-c('Up regulated','Down regulated','Both')
         rownames(res)<-lapply(1:rows, function(i) {
-         entry[[i]]
+         as.character(entry[[i]])
         
         })
-       for(i in 1:length(combo))
+       for(i in 1:length(combo()))
        {
-        res[i,1]<-nrow(as.data.frame(result()[[i]][1]))
-        res[i,2]<-nrow(as.data.frame(result()[[i]][2]))
-        res[i,3]<-nrow(as.data.frame(result()[[i]][3]))
+        res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
+        res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
+        res[i,3]<-nrow(as.data.frame(result[[i]][[3]]))
        }
-       for(i in length(combo)+1:nrow(modules))
+       for(i in (length(combo())+1):(nrow(cluster_info)+length(combo())))
        {
         res[i,1:2]<-0
-        res[i,3]<-result()[[i]][3]
+        res[i,3]<-length(result[[i]][[3]])
        }
-      }
+      
     }
     else{
-      rownames(res)<-lapply(1:length(combo), function(i) {
-        combo[[i]]
+      rownames(res)<-lapply(1:length(combo()), function(i) {
+        combo()[[i]]
         
       })
       colnames(res)<-c('Up regulated','Down regulated','Both')
-      for(i in 1:length(combo))
+      for(i in 1:length(combo()))
       {
-        res[i,1]<-nrow(as.data.frame(result()[[i]][1]))
-        res[i,2]<-nrow(as.data.frame(result()[[i]][2]))
-        res[i,3]<-nrow(as.data.frame(result()[[i]][3]))
+        res[i,1]<-nrow(as.data.frame(result[[i]][[1]]))
+        res[i,2]<-nrow(as.data.frame(result[[i]][[2]]))
+        res[i,3]<-nrow(as.data.frame(result[[i]][[3]]))
       }
     }
     DT::datatable(res,class = 'cell-border stripe',
@@ -81,27 +79,24 @@ output$de_venn <- DT::renderDataTable({
 #Display the venn diagram when user selects the sets to get the overlap of the sets
 observeEvent(input$de_venn_cell_clicked,{
   
+  result<-DE_genes()
   selected <- input$de_venn_cells_selected
   venn_list<-list()
-  comp<-lapply(1:length(combo), function(i) {
-    combo[[i]]
+  comp<-lapply(1:length(combo()), function(i) {
+    combo()[[i]]
     
   })
   
-  if(!is.null(wgcna_output()))
+  if(!is.null(CoCena()))
   {
-    if((length(wgcna_output()$modules())>0))
-    {
-      mod<-wgcna_output()$modules()
-      modules<-as.data.frame(table(mod))
-      colnames(modules)<-c("Var1","numbers")
-      entry<-c(combo, levels(modules$Var1))
+      cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+      entry<-c(combo(), cluster_info$color)
       rows<-length(entry)
-      entry<-c(as.vector(combo), as.vector(modules$Var1))
+      entry<-c(as.vector(combo()), as.vector(cluster_info$color))
       comp<-lapply(1:rows, function(i) {
         entry[i]
     })
-    }
+    
   }
   reg<-c('up regulated genes','down regulated genes','All DE genes')
   pal<-c('pink','light green','light blue','light yellow')
@@ -115,18 +110,13 @@ observeEvent(input$de_venn_cell_clicked,{
       row<-selected[i,1]
       col<-selected[i,2]
       genes<-NULL
-      if(row>length(combo))
+      if(row>length(combo()))
       {
-        mod<-wgcna_output()$modules()
-        modules<-as.data.frame(table(mod))
-        colnames(modules)<-c("Var1","numbers")
-        WGCNA_matrix<-wgcna_output()$WGCNA_matrix()
-        idx_w<-which(mod==modules$Var1[row-length(combo)])
-        genes<-colnames(WGCNA_matrix)[idx_w]
+        genes<-unlist(strsplit(cluster_info[(row-length(combo())),"gene_n"],split=","))
       }
       else
       {
-        df<-as.data.frame(result()[[row]][col])
+        df<-as.data.frame(result[[row]][[col]])
         genes<-df[,1]
         rownames(df)<-genes
       }

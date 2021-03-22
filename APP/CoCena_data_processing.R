@@ -53,11 +53,6 @@ CoCena_data_processing <- function(input,output,session,top_var,range_corr,min_c
                    output
                  })
   })
-  #createAlert(session,"cutoff","message_cutoff",
-  #            title="In order to proceed...",
-  #            content="set a minimal correlation cut-off. Either choose the calculated optimal cutoff
-  #                             or set a custom cutoff value following a guided selection based on the correlation statistics.
-  #                             To do so press the respective button below.")
   
   correlation <- reactive({
     withProgress(message = 'Processing:',
@@ -126,7 +121,7 @@ CoCena_data_processing <- function(input,output,session,top_var,range_corr,min_c
       geom_point() +
       geom_smooth(method="lm") +
       theme_bw() + 
-      ggtitle(paste0("Custom cut-off: ",cut_off_set, "; R²: ", round(stats[1],3), "; no. edges: ",
+      ggtitle(paste0("Custom cut-off: ",cut_off_set, "; R.squared: ", round(stats[1],3), "; no. edges: ",
                      stats[2], "; no. nodes: ", stats[3], "; no. networks: ", stats[4]))+
       theme(plot.title = element_text(size = 10))
     

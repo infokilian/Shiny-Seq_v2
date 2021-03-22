@@ -23,7 +23,7 @@ heatmap_module_UI<-function(id)
 }
 
 heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,combination,
-                         wgcna_output, organism)
+                         CoCena, organism)
 {
   print("line 29 heatmap")
   output$heat_comb <- renderUI({
@@ -53,13 +53,10 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         # Pause for 0.1 seconds to simulate a long computation.
         Sys.sleep(0.1)
         
-        if(!is.null(wgcna_output()))
+        if(!is.null(CoCena()))
         {
-          if(length(wgcna_output()$modules())>0)
-          {
-            modules<-as.data.frame(table(wgcna_output()$modules()))
-            colnames(modules)<-c("Var1","number")
-            entry<-c(combo, levels(modules$Var1))
+            cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+            entry<-c(combo, cluster_info$color)
             checklist<-list()
             for (i in seq_along(entry)) {
               checklist[[entry[[i]]]] = i
@@ -74,7 +71,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             selectInput(session$ns("heat_choice"),label = h5("Choose comparison") ,
                         choices = checklist,selected = 1)
             
-          }
+          
         }
         else{
           
@@ -126,13 +123,10 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
         # Pause for 0.1 seconds to simulate a long computation.
         Sys.sleep(0.1)
         
-        if(!is.null(wgcna_output()))
+        if(!is.null(CoCena()))
         {
-          if(length(wgcna_output()$modules())>0)
-          {
-            modules<-as.data.frame(table(wgcna_output()$modules()))
-            colnames(modules)<-c("Var1","number")
-            entry<-c(combo, levels(modules$Var1))
+            cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+            entry<-c(combo, cluster_info$color)
             checklist<-list()
             for (i in seq_along(entry)) {
               checklist[[entry[[i]]]] = i
@@ -147,7 +141,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             selectInput(session$ns("heat_choice"),label = h5("Choose comparison") ,
                         choices = checklist,selected = 1)
             
-          }
+          
         }
         else{
           
@@ -196,7 +190,7 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             num<-length(combo)
             heatmap_name<-"Heatmap of top 1000 most variable genes"
             heatmap_genes(heatmap_call,dds(),dds.fc,rld,NULL,
-                          result,NULL,NULL,
+                          result,NULL,
                           num,heatmap_name,
                           input$Distance,input$Linkage)
           }
@@ -207,32 +201,28 @@ heatmap_module<-function(input,output,session,heatmap_call,dds,batch,de_genes,co
             num<-length(combo)
             
             heatmap_name<-" "
-            if(!is.null(wgcna_output()))
+            if(!is.null(CoCena()))
             {
-              if(length(wgcna_output()$modules())>0)
-              {
-                mod<-wgcna_output()$modules()
-                modules<-as.data.frame(table(mod))
-                colnames(modules)<-c("Var1","numbers")
-                entry<-c(as.vector(combo), as.vector(modules$Var1))
+                cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
+                entry<-c(as.vector(combo), as.vector(cluster_info$color))
                 
                 heatmap_name<-paste("Heatmap of ",heatmap_call,entry[as.numeric(input$heat_choice)])
                 h<-heatmap_genes(heatmap_call,NULL,dds.fc,rld,input$heat_choice,
                               result,
-                              mod,wgcna_output()$WGCNA_matrix(),
+                              cluster_info,
                               num,heatmap_name,
                               input$Distance,input$Linkage)
                 #insert validate
                 shiny::validate(need(!is.null(h),'Heat map cannot be dislayed for one gene/trascription factor'))
                 h
-              }
+              
             }
             else
             {
               heatmap_name<-paste0("Heatmap of ",combo[[as.numeric(input$heat_choice)]])
               
               h<-heatmap_genes(heatmap_call,NULL,dds.fc,rld,input$heat_choice,
-                            result,NULL,NULL,
+                            result,NULL,
                             num,heatmap_name,
                             input$Distance,input$Linkage)
               #insert validate
