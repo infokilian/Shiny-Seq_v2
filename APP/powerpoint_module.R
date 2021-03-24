@@ -179,8 +179,8 @@ powerpoint_module<-function(input,output,session,
                      result_hall<-Enriched_hall_table()
                      result_de<-DE_genes()
                      result_tf<-DE_TF()
-                     if(as.numeric(filechoice())!=3) result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), 10)
-                     else result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice_module1(), NULL, organism(), dataset(), 10)
+                     if(as.numeric(filechoice())!=3) result_tf_ChEA3 <- TF_prediction_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), 10)
+                     else result_tf_ChEA3 <- TF_prediction_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice_module1(), NULL, organism(), dataset(), 10)
 
                      q$dat<-summary_analysis(result_de,result_tf,result,result_bp,result_hall,combo)
 
@@ -1260,8 +1260,8 @@ powerpoint_module<-function(input,output,session,
                    result_hall<-Enriched_hall_table()
                    anova<-anova_table()
                    a_tab<-anova_table()[,-c(2,3)]
-                   if(as.numeric(filechoice())!=3) result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), 25)
-                   else result_tf_ChEA3 <- TF_prediciton_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice_module1(), NULL, organism(), dataset(), 25)
+                   if(as.numeric(filechoice())!=3) result_tf_ChEA3 <- TF_prediction_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), 25)
+                   else result_tf_ChEA3 <- TF_prediction_ChEA3(DE_genes(),dds.fc2(), anova_table(),combination(), conchoice_module1(), NULL, organism(), dataset(), 25)
 
                    #excel table for the comparisons selected
 

@@ -1253,7 +1253,7 @@ p_value_all<-function(result,p_choice,combination)
 
 
 #TF prediction using ChEA3
-TF_prediciton_ChEA3<-function(DE_genes,dds.fc,anova_table,
+TF_prediction_ChEA3<-function(DE_genes,dds.fc,anova_table,
                                 combination,conchoice,CoCena,
                                 organism,dataset, topTF){
 # Create a Progress object

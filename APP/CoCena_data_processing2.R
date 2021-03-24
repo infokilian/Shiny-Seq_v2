@@ -78,7 +78,7 @@ CoCena_data_processing2<-function(input,output,session,anno,top_var_output,cutof
       colnames(trans_norm)[ncol(trans_norm)] <- "group_mean"
       grplist=colnames(trans_norm)[-(ncol(trans_norm))]
 
-      GFC_all_genes=do.call("cbind", lapply(grp=grplist, gfc_calc, trans_norm = trans_norm, group_means = trans_norm[,"group_mean"],
+      GFC_all_genes=do.call("cbind", lapply(grplist, gfc_calc, trans_norm = trans_norm, group_means = trans_norm[,"group_mean"],
                                             range_GFC = as.numeric(range_GFC())))
 
       GFC_all_genes= round(GFC_all_genes,3)

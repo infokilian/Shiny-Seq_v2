@@ -56,9 +56,10 @@ predicted_TF<-eventReactive(input$predicted,{
                      "Plasmodium falciparum",
                      "Others"))){
     closeAlert(session, "Error")
-  if(!is.null(CoCena)){ 
+    print(is.null(CoCena()))
+  if(!is.null(CoCena())){ 
     cluster_info<-as.data.frame(CoCena()$cluster_calc()[CoCena()$cluster_calc()$cluster_included=="yes",])
-    predicted <- TF_prediciton_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(),cluster_info, organism(), dataset(), as.numeric(input$topTF))
+    predicted <- TF_prediction_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(),cluster_info, organism(), dataset(), as.numeric(input$topTF))
     }
     else predicted <- TF_prediction_ChEA3(DE_genes(), dds.fc(), anova_table(),combination(), conchoice(), NULL, organism(), dataset(), as.numeric(input$topTF))
     predicted
