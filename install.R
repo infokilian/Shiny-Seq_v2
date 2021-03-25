@@ -69,7 +69,10 @@ list.of.bioc.packages <- c(
     "V8",
     "VennDiagram",
     "visNetwork",
-    "WGCNA"
-)
+    "WGCNA",
+    "ggplot2",
+    "httr",
+    "jsonlite",
+    "stringi")
 new.packages.bioc <- list.of.bioc.packages[!(list.of.bioc.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages.bioc) > 0) BiocManager::install(new.packages.bioc, update = FALSE)
