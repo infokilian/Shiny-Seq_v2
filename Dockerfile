@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     librsvg2-dev \
     libmagick++-dev \
     libglpk40 \
+	libpoppler-cpp-dev \
+	libglpk-dev \
+	tk \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
