@@ -369,7 +369,7 @@ Module_Raw_data_Input <- function(input, output, session)
     d<-paste('~',' ',d,colnames(sample_table)[condition],sep = " ")
     
     sample_table$Files <- paste(sample_table[,1], ".ReadsPerGene.out.tab", sep = "") #create a vector consisting of the respective file names
-    sample_table <- sample_table[,c(1,ncol(sample_table),3:ncol(sample_table)-1)]
+    sample_table <- sample_table[,c(1,ncol(sample_table),3:ncol(sample_table)-1)]#data shuffling to setup for DESeqDataSet function
     dds_txi <- as.data.frame(counts(DESeqDataSetFromHTSeqCount(sampleTable = sample_table, #create the count table
                                           directory = directory,
                                           design = formula(d))))
@@ -389,8 +389,7 @@ Module_Raw_data_Input <- function(input, output, session)
                                       "external_gene_name")],
                          by.x = "ensembl_id",
                          by.y = "ensembl_gene_id_version")
-      print("dds_txi")
-      print(dds_txi_anno)
+      
       dds_txi_anno <- dds_txi_anno[!duplicated(dds_txi_anno$external_gene_name),]
       rownames(dds_txi_anno) <- dds_txi_anno$external_gene_name
       dds_txi_anno$ensembl_id <- NULL
@@ -546,7 +545,7 @@ Module_Raw_data_Input <- function(input, output, session)
 
     }else if(as.numeric(input$filechoice)==3)
     {
-      dat<-as.data.frame(dds_txi())
+      dat<-as.data.frame(counts(dds_txi()))
       sample_names<-colnames(dat)
       #convert entries to integers
       data=as.matrix(dat)

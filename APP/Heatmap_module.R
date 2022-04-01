@@ -11,7 +11,7 @@ heatmap_module_UI<-function(id)
                     )),
     fluidRow(column(3,
                     selectInput(ns("Linkage"), label = h5("Select clustering method"), 
-                                choices = list("Average" = 1,"complete"=2,"Ward.D2"=3,"Ward.D" = 4,"Singular"=5),
+                                choices = list("Average" = 1,"Complete"=2,"Ward.D2"=3,"Ward.D" = 4,"Singular"=5),
                                 selected = 1)
                     )),
     uiOutput(ns("heat_comb")),

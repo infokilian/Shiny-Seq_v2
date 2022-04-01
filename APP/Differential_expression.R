@@ -141,11 +141,15 @@ Module_Differential_Expression<-function(input,output,session,conchoice,dds.fc,
         {
           if(input$candidates1[i]!=input$candidates2[j])
           {
-            if(!(c(input$candidates2[j],input$candidates1[i]) %in% l))
+            #check whether the combination already exists in the list object
+            if(!(paste0(input$candidates2[j],",",input$candidates1[i]) %in% names(l)))
               list2 <- list()
+            #assign conditions to the list
             list2[1] = input$candidates1[i]
             list2[2] = input$candidates2[j]
             l[[length(l)+1]]<-list2
+            #assign list names
+            names(l)[length(l)] <- paste0(l[[length(l)]][1],",",l[[length(l)]][2])
           }
         }
       }

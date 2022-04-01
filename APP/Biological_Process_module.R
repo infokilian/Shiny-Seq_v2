@@ -217,15 +217,17 @@ output$Enriched_bp <- DT::renderDataTable({
         result<-Enriched_BP()[[2]] #obj
         res<-Enriched_BP()[[1]]
         req(input$category_bp)
-        
+        if(col==1)reg="up"
+        else if(col==2)reg="down"
+        else reg="both"
         if(nrow(res[[row]][[col]]) == 0){
           warning("No Data available for plotting")
         }
         else if(nrow(res[[row]][[1]]) == 0 && nrow(res[[row]][[2]] != 0)){
-          enrichment_plot("biological process",result,res,row,1,input$category_bp,input$category_go)
+          enrichment_plot("biological process",result,res,row,1,input$category_bp,input$category_go,reg)
         }
         else{
-          enrichment_plot("biological process",result,res,row,col,input$category_bp,input$category_go)
+          enrichment_plot("biological process",result,res,row,col,input$category_bp,input$category_go,reg)
         }
       })
         

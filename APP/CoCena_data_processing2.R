@@ -19,11 +19,11 @@ CoCena_data_processing2<-function(input,output,session,anno,top_var_output,cutof
     filt_cutoff_data = gene_corr()[["correlation_df_filt"]] %>% dplyr::filter(., rval > cutoff_choice())
     filt_cutoff_graph = igraph::graph_from_data_frame(filt_cutoff_data,directed=FALSE)
     filt_cutoff_counts = top_var_output()[["ds"]][row.names(top_var_output()[["ds"]]) %in% names(V(filt_cutoff_graph)),]
-    corresp_info = info_dataset[rownames(t(top_var_output()[["top_var_output"]]))%in%rownames(info_dataset),]
+    corresp_info = info_dataset[rownames(t(top_var_output()[["top_var_output"]])) %in% rownames(info_dataset),]
   
     output[["filt_cutoff_graph"]] <- filt_cutoff_graph
     output[["filt_cutoff_data"]] <- filt_cutoff_data
-
+    
     annotation_c <-info_dataset[voi()]
     rownames(annotation_c)<-colnames(filt_cutoff_counts)
       heatmap_filtered_counts <- pheatmap::pheatmap(mat = filt_cutoff_counts ,
@@ -31,7 +31,7 @@ CoCena_data_processing2<-function(input,output,session,anno,top_var_output,cutof
                                                   scale="row",
                                                   cluster_rows=T,
                                                   cluster_cols=T,
-                                                 # annotation_colors = mat_colors,
+                                                 #annotation_colors = mat_colors,
                                                   annotation_col=annotation_c,
                                                   fontsize = 8,
                                                   show_rownames = F, 

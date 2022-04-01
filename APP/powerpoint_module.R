@@ -174,7 +174,9 @@ powerpoint_module<-function(input,output,session,
                      res<-Enriched_Kegg_obj()
                      result<-Enriched_Kegg_table()
                      res_bp<-Enriched_BP_obj()
+                     print(str(res_bp))
                      result_bp<-Enriched_BP_table()
+                     print(str(result_bp))
                      res_hall<-Enriched_hall_obj()
                      result_hall<-Enriched_hall_table()
                      result_de<-DE_genes()
@@ -205,6 +207,7 @@ powerpoint_module<-function(input,output,session,
                      progress$inc(1/(n), detail = paste("Doing part", 7,"/",(n)))
                      # Pause for 0.1 seconds to simulate a long computation.
                      Sys.sleep(0.1)
+                     print(length(combo))
 
                      for (i in 1:length(combo))
                      {
@@ -374,7 +377,7 @@ powerpoint_module<-function(input,output,session,
                          else title<-paste("All up regulated kegg pathways",name)
                          print(title)
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
-                         keggplot <- enrichment_plot("kegg",res,result,i,1,10,"")
+                         keggplot <- enrichment_plot("kegg",res,result,i,1,10,"","up")
                          ggsave(paste(nam,'.png',sep = ""),
                                 plot = keggplot,
                                 dpi = 1000,height = 6,width = 12)
@@ -403,7 +406,7 @@ powerpoint_module<-function(input,output,session,
                          if(nrow(r)>=10) title<-paste("Top 10 up regulated biological processes",name)
                          else title<-paste("All up regulated biological processes",name)
                          print(title)
-                         bioprocplot <- enrichment_plot("biological process",res_bp,result_bp,i,1,10,"")
+                         bioprocplot <- enrichment_plot("biological process",res_bp,result_bp,i,1,10,"","up")
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
                          ggsave(paste(nam,'.png',sep = ""),
                                 plot = bioprocplot,
@@ -444,7 +447,7 @@ powerpoint_module<-function(input,output,session,
                          else title<-paste("All up regulated Hallmark gene sets",name)
                          print(title)
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
-                         hallplot <- enrichment_plot("hallmark",res_hall,result_hall,i,1,10,"")
+                         hallplot <- enrichment_plot("hallmark",res_hall,result_hall,i,1,10,"","up")
                          ggsave(paste(nam,'.png',sep = ""),
                                 plot = hallplot,
                                 dpi = 1000,height = 6,width = 12)
@@ -551,7 +554,7 @@ powerpoint_module<-function(input,output,session,
                          if(nrow(r2)==0) num<-1
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
                          ggsave(paste(nam,'.png',sep = ""),
-                                enrichment_plot("kegg",res,result,i,num,10,""),
+                                enrichment_plot("kegg",res,result,i,num,10,"","down"),
                                 dpi = 1000,height = 6,width = 12)
 
                          q$plot_names=c(q$plot_names,paste(nam,'.png',sep = ""))
@@ -582,9 +585,10 @@ powerpoint_module<-function(input,output,session,
                          print(title)
                          num<-2
                          if(nrow(r2)==0) num<-1
-                         p<-function(){enrichment_plot("biological process",res_bp,result_bp,i,num,10,"")}
+                         print(num)
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
-                         ggsave(paste(nam,'.png',sep = ""),p(),dpi = 1000,height = 6,width = 12)
+                         bioproc_down<-enrichment_plot("biological process",res_bp,result_bp,i,num,10,"","down")
+                         ggsave(paste(nam,'.png',sep = ""),bioproc_down,dpi = 1000,height = 6,width = 12)
 
                          q$plot_names=c(q$plot_names,paste(nam,'.png',sep = ""))
 
@@ -628,7 +632,7 @@ powerpoint_module<-function(input,output,session,
                          if(nrow(r2)==0) num<-1
                          nam<-str_replace_all(paste('./plots/',title,sep = "")," ","_")
                          ggsave(paste(nam,'.png',sep = ""),
-                                enrichment_plot("hallmark",res_hall,result_hall,i,num,10,NULL),
+                                enrichment_plot("hallmark",res_hall,result_hall,i,num,10,NULL,"down"),
                                 dpi = 1000,height = 6,width = 12)
                          q$plot_names=c(q$plot_names,paste(nam,'.png',sep = ""))
                        }
@@ -1254,7 +1258,9 @@ powerpoint_module<-function(input,output,session,
                    result<-Enriched_Kegg_table()
                    #go terms(biological process)
                    res_bp<-Enriched_BP_obj()
+                   print(str(res_bp))
                    result_bp<-Enriched_BP_table()
+                   print(str(result_bp))
                    #hallmark
                    res_hall<-Enriched_hall_obj()
                    result_hall<-Enriched_hall_table()

@@ -222,14 +222,18 @@ Hallmark_module<-function(input,output,session,DE_genes,
 
         req(input$category_hall)
         
+        if(col==1)reg="up"
+        else if(col==2)reg="down"
+        else reg="both"
+        
         if(nrow(res[[row]][[col]]) == 0){
           warning("No Data available for plotting")
         }
         else if(nrow(res[[row]][[1]]) == 0 && nrow(res[[row]][[2]] != 0)){
-          enrichment_plot("hallmark",result,res,row,1,input$category_hall,NULL)
+          enrichment_plot("hallmark",result,res,row,1,input$category_hall,NULL,reg)
         }
         else{
-          enrichment_plot("hallmark",result,res,row,col,input$category_hall,NULL)
+          enrichment_plot("hallmark",result,res,row,col,input$category_hall,NULL,reg)
         } 
       })
 

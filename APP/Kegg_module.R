@@ -337,14 +337,17 @@ output$plot_category<-renderUI({
 keggplot<-reactive({
   result<-Enriched_Kegg()[[2]] #obj
   res<-Enriched_Kegg()[[1]]
+  if(col==1)reg="up"
+  else if(col==2)reg="down"
+  else reg="both"
   if(nrow(res[[row]][[col]]) == 0){
     warning("No Data available for plotting")
   }
   else if(nrow(res[[row]][[1]]) == 0 && nrow(res[[row]][[2]] != 0)){
-   enriched_plot <- enrichment_plot("kegg",result,res,row,1,input$category,"")
+   enriched_plot <- enrichment_plot("kegg",result,res,row,1,input$category,"",reg)
   }
   else{
-   enriched_plot <- enrichment_plot("kegg",result,res,row,col,input$category,"")
+   enriched_plot <- enrichment_plot("kegg",result,res,row,col,input$category,"",reg)
   }
   enriched_plot
 })

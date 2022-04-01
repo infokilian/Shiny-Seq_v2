@@ -30,10 +30,12 @@ jsResetCode <- "shinyjs.reset = function() {history.go(0)}" # Define the js meth
 
 ui<-tagList(
     navbarPage(
-          title="Shiny-Seq",
+          #header configuration
+          title="Shiny-Seq v2",
           position="fixed-top",
           theme="design.css",
           id="ShinySeq",
+               #'Raw Data' tab
                navbarMenu("Raw Data",
                        tabPanel("Raw Data",
                                  Module_Raw_data_UI("module"),
@@ -89,6 +91,7 @@ ui<-tagList(
                                  PCA_UI("module")
                        )
                ),
+               #'Normalization' tab
                navbarMenu("Normalization",
                           tabPanel("Normalized table",
                                    br(),
@@ -150,7 +153,8 @@ ui<-tagList(
                         )
                )  
                ),
-          tabPanel("Batch effect analysis",
+          #'Batch effect' tab
+          tabPanel("Batch Effect Analysis",
                    tabsetPanel(
                      tabPanel("Compute batch effect",
                               br(),
@@ -173,7 +177,7 @@ ui<-tagList(
                                        conditionalPanel(condition = "input.ok3>0",
                                                         plotOutput("heatmap_sample_batch"))
                               ))),
-         
+          #'Downstream Analysis' tab
           navbarMenu("Downstream Analysis",
                        tabPanel("Differential expression analysis",
                                 tabsetPanel(
@@ -259,6 +263,7 @@ ui<-tagList(
                                          Hallmark_module_UI("module"))
                               ))
                      ),
+          #'CoCena' tab
           tabPanel("CoCena",
                    tabsetPanel(
                      tabPanel("1. Network settings",
@@ -282,7 +287,7 @@ ui<-tagList(
                               conditionalPanel("input.calc_network>0",
                                                CoCena_network_generation_UI("module")))
                    )),
-          
+          #'summary & results' tab
           tabPanel("Summary and results ", icon = icon("file-download"),
                    powerpoint_module_UI("module")
           )
@@ -294,10 +299,11 @@ ui<-tagList(
 #################################Begin of code#################
 # By default, the file size limit is 5MB. It can be changed by
 # setting this option. Here we'll raise limit to 19MB.
-options(shiny.maxRequestSize=500*1024^2)
+options(shiny.maxRequestSize=50000000*1024^2)
 
 server<-function(input, output,session) {
   
+  #Visitor counter
   output$counter <- 
     renderText({
       if (!file.exists("counter.Rdata")) counter <- 0
@@ -616,11 +622,12 @@ observeEvent(input$reset, {
       }
 
   })
-
+  
+  #Start button on 'Raw Data' tab
+  
+  observeEvent(input$ok1,{
   #start button turns blue on click
   #call boxplot and PCA for raw data input
-  observeEvent(input$ok1,{
-    
     observeEvent(input_data$file2(),{
       
       if(!is.null(input_data$pData())) {
@@ -697,6 +704,7 @@ observeEvent(input$reset, {
     
   })
 
+#Start button of 'Normalization' tab  
 observeEvent(input$ok2,
              {
                toggleClass("ok2", "blue")
@@ -821,6 +829,7 @@ callModule(powerpoint_module,"module",
            reactive({input_data$condition_module1()}),reactive({input_data$filechoice()})
 )
 
+#Start button of 'Batch Effect Analysis' tab
 observeEvent(input$ok3,
              {
 
@@ -902,7 +911,7 @@ observeEvent(input$ok3,
                observeEvent(input$add_file,
                             {
                               filepath<-input$add_file$datapath
-                              TF_list<-read.csv(filepath, header = TRUE,sep = "\t",check.names = FALSE,quote = "\"")
+                              TF_list<-as.vector(read.csv(filepath, header = FALSE,sep = "\t",check.names = FALSE,quote = "\""))
                               
                               v$marker<-callModule(Enriched_markers_module,"module1","marker", reactive({TF_list}),
                                                  reactive({input_data$organism()}),
@@ -927,15 +936,16 @@ observeEvent(input$ok3,
                               )
                             })
 
-                                     
+               #load the transcription factor file                      
                TF_list<-read.csv("./www/Transcriptome_TFcat.txt", header = TRUE,sep = "\t",check.names = FALSE,quote = "\"")
                if (input_data$organism()=="Homo sapiens"){ 
-                 TF_list <- TF_list[,"Human"]
+                 TF_list <- TF_list[TF_list$`Merged Taxa` == "TF","Human"]
                  
                } else if (input_data$organism()=="Mus musculus"){ 
-                 TF_list <- TF_list[,"Mouse"]
+                 TF_list <- TF_list[TF_list$`Merged Taxa` == "TF","Mouse"]
                  
                }
+               
           v$TF<-callModule(Enriched_markers_module,"module",
                            "TF",
                           reactive({TF_list}),

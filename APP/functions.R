@@ -20,7 +20,7 @@ boxplot_output<-function(edata,pData,col)
   # #set order of columns in expression data as same as order of sample  ID in pheno data
   data=data[,as.vector(pheno[,1])]#1
   colnames(data)<- as.vector(pheno[,var])
-  boxplot.matrix(as.matrix(data),outline=FALSE,xlab='Rows',ylab='Value',col=colors[pheno[,var]],boxwex=0.25,names=lapply(i,function(x) paste('row',x[1])))
+  boxplot.matrix(as.matrix(data),outline=FALSE,xlab='Rows', ylab='Value',col=colors[pheno[,var]],boxwex=0.25,names=lapply(i,function(x) paste('row',x[1])))
   legend("topright", legend = unique(pheno[,var]),xpd=TRUE, pch = 16, col = colors[unique(pheno[,var])], cex=0.85,inset=0.0005)
 
 }
@@ -499,7 +499,7 @@ enrichment_function<-function(enrichment_type,enrichment_input)
     {
       obj<-enrichKEGG(gene         = enrichment_input[[1]],
                       organism     = enrichment_input[[2]],
-                      pAdjustMethod = "none",
+                      pAdjustMethod = "BH",
                       qvalueCutoff = 1,
                       minGSSize = 0)
     }
@@ -509,7 +509,7 @@ enrichment_function<-function(enrichment_type,enrichment_input)
                universe      = enrichment_input[[2]],
                OrgDb         = enrichment_input[[3]],
                ont           = "BP",
-               pAdjustMethod = "none",
+               pAdjustMethod = "BH",
                qvalueCutoff  = 1, 
                readable      = TRUE)
       
@@ -520,7 +520,7 @@ enrichment_function<-function(enrichment_type,enrichment_input)
       obj<-enricher(enrichment_input[[1]],
                     TERM2GENE = enrichment_input[[2]],
                     universe  = enrichment_input[[3]],
-                    pAdjustMethod = "none",
+                    pAdjustMethod = "BH",
                     qvalueCutoff = 1,
                     minGSSize = 5)
     }
@@ -806,7 +806,7 @@ if(!is.null(CoCena))
 
 #Display barplot of top 10 kegg pathway identified for selected comparison
 
-enrichment_plot<-function(enrichment_type,result,res,row,col,category,category_go){
+enrichment_plot<-function(enrichment_type,result,res,row,col,category,category_go,reg){
   
   # Create a Progress object
   progress <- shiny::Progress$new()
@@ -833,6 +833,11 @@ enrichment_plot<-function(enrichment_type,result,res,row,col,category,category_g
   col_idx<-NULL
   if(up==0) {col_idx<- 1}
   else if (down==0) {col_idx<-2}
+  
+  col_table=NULL
+  if(reg=="up")col_table=1
+  else if(reg=="down")col_table=2
+  else col_table=3
 
   
   if(enrichment_type!="biological process"){
@@ -847,12 +852,12 @@ enrichment_plot<-function(enrichment_type,result,res,row,col,category,category_g
       Sys.sleep(0.1)
       return(p)
 
-  }
-  
-  else{
-    if(nrow(res[[row]][[col]])!=0) ego<-result[[row]][[col]]
-    else ego<-NULL 
+  }else{
     
+    if(nrow(res[[row]][[col_table]])!=0) ego<-result[[row]][[col]]
+    else ego<-NULL 
+    print("ego")
+    print(ego)
     x<-NULL
     if(category_go!=""){
       x<-gofilter(ego,level=as.numeric(category_go))#dropGO(ego, level = as.numeric(input$category_go), term = NULL)
@@ -889,12 +894,16 @@ Enriched_transcription_factors<-function(TF_list,result,num,input_organism,CoCen
       for(j in 1:3)
       {
         res<-as.data.frame(result[[i]][j])
+        print("res")
+        print(res)
         genes<-res[,1]
         df<-res[,-1]
         rownames(df)<-genes
-
+        print("TF_list")
+        print(TF_list)
           TF[[length(TF)+1]]<-df[which(rownames(df) %in% TF_list),]
-
+        print("TF")
+        print(TF)
       }
       DE_TF[[i]]<-TF
     }
@@ -921,6 +930,7 @@ Enriched_transcription_factors<-function(TF_list,result,num,input_organism,CoCen
       }
       
     }
+
     return(DE_TF)
   }
 }
@@ -1008,7 +1018,8 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   }
   shiny::validate(need(!is.null(topVarGenes),"The number of differentially expressed genes for this condition is Zero"))
   library(RColorBrewer)
-  my_palette <- colorRampPalette(c("blue","white", "red"))(n = 15)
+  paletteLength<-50
+  my_palette <- colorRampPalette(c("blue", "white", "red"))(paletteLength)
 
   #Color key
   library(RColorBrewer)
@@ -1028,7 +1039,7 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   dist_method<-c("euclidean", "manhattan")
 
   distance = dist(mat,method = dist_method[as.numeric(Distance)])
-  link_method<-c("average", "complete","Ward.D2","Ward.D","single")
+  link_method<-c("average", "complete","ward.D2","ward.D","single")
   cluster = hclust(distance, method = link_method[as.numeric(Linkage)])
   
 
@@ -1041,8 +1052,12 @@ heatmap_genes<-function(heatmap_call,dds,dds.fc,rld,heat_choice,
   Var1        <- unique(colors[colData(dds.fc)[,"condition"]])
   names(Var1) <- levels(colData(dds.fc)[,"condition"])
   anno_colors <- list(condition = Var1)
+  
+  breakList <- c(seq(min(mat), 0, length.out=ceiling(paletteLength/2) + 1), 
+                seq(max(mat)/paletteLength, max(mat), length.out=floor(paletteLength/2)))
 
-  p<-pheatmap::pheatmap(mat, annotation = annotation,color = my_palette,
+  p<-pheatmap::pheatmap(mat, annotation = annotation,
+              color = my_palette, breaks = breakList,
               main = heatmap_name,
               clustering_distance_rows = dist_method[as.numeric(Distance)],
               clustering_method = link_method[as.numeric(Linkage)],

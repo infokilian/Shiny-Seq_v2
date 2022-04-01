@@ -21,11 +21,12 @@ list.of.packages <- c("shiny",
                       #"shinymaterial",
                       "RcppArmadillo",
                       "shinyjs",
-                      'RColorBrewer',
+                      "RColorBrewer",
                       "stringr",
-                      'formula.tools',
-                      'data.table',
-                      'fdrtool',
+                      "formula.tools",
+                      "Formula",
+                      "data.table",
+                      "fdrtool",
                       "VennDiagram",
                       "devtools",
                       'colorspace',
@@ -50,7 +51,17 @@ list.of.packages <- c("shiny",
                       "ggsci",
                       "gtools",
                       "stringi",
-                      "ggplot2"
+                      "ggplot2",
+                      "Hmisc",
+                      "dplyr",
+                      "XML",
+                      "mgcv",
+                      "nlme",
+                      "MatrixStats",
+                      "survival",
+                      "lattice",
+                      "fastcluster",
+                      "dynamicTreeCut"
 )
 
 lapply(list.of.packages, require, character.only = TRUE)
@@ -94,7 +105,18 @@ list.of.bioc.packages<- c("rhdf5",
                           "pathview",
                           "lpsymphony",
                           "msigdbr",
-                          "ComplexHeatmap"
+                          "ComplexHeatmap",
+                          "annotate",
+                          "BiocParallel",
+                          "genefilter",
+                          "SummarizedExperiment",
+                          "Biobase",
+                          "MatrixGenerics",
+                          "GenomicRanges",
+                          "GenomeInfoDb",
+                          "IRanges",
+                          "S4Vectors",
+                          "BiocGenerics"
 )
 
 
@@ -103,4 +125,19 @@ new.packages.bioc <- list.of.bioc.packages[!(list.of.bioc.packages %in% installe
 #install.packages("BiocManager")
 if(length(new.packages.bioc)>0) BiocManager::install(new.packages.bioc,suppressUpdates=TRUE)
 
+#devtools packages
+library(BiocManager)
+
+list.of.dev.packages <- c("plotly",
+                          "crosstalk",
+                          "DT")
+
+new.packages.dev <- list.of.dev.packages[!(list.of.dev.packages %in% installed.packages()[,"Package"])]
+
+if( "plotly" %in% new.packages.dev) devtools::install_github("ropensci/plotly", upgrade = "never")
+if( "crosstalk" %in% new.packages.dev) devtools::install_github("rstudio/crosstalk",force=TRUE, upgrade = "never")
+if( "DT" %in% new.packages.dev) devtools::install_github('rstudio/DT', upgrade = "never")
+
 lapply(c(list.of.dev.packages,list.of.packages,list.of.bioc.packages), require, character.only = TRUE)
+
+
